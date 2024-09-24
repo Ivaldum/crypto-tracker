@@ -1,47 +1,24 @@
-import { useState, useEffect } from "react"
-import {getCryptos} from './services/cryptoService'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Login from './components/Login';
+import Register from './components/Register';
+// import ProtectedRoute from './components/ProtectedRoute';
 
-interface Crypto {
-  id: number;
-  name: string;
-  symbol: string;
-  price: number;
-  trend: number;
-}
+const App = () => {
+  return (
+    <Router>
+      <Routes>
+        {/* Rutas públicas */}
+        <Route path="/auth/login" element={<Login />} />
+        <Route path="/auth/register" element={<Register />} />
 
-const App: React.FC = () => {
-  const [cryptos, setCryptos] = useState<Crypto[]>([])
+        {/* Rutas protegidas */}
+        <Route
+          path="/panel"
+          //element={<ProtectedRoute element={<Panel />} redirectTo="/login" />}
+        />
+      </Routes>
+    </Router>
+  );
+};
 
-  useEffect(() => {
-
-    getCryptos().then((response) => setCryptos(response.data))
-  }, []);
-
-  return(
-    <div>
-      <h1>Crypto Tracker</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Symbol</th>
-            <th>Price</th>
-            <th>Trend</th>
-          </tr>
-        </thead>
-        <tbody>
-          {cryptos.map((crypto) => (
-            <tr key={crypto.id}>
-              <td>{crypto.name}</td>
-              <td>{crypto.symbol}</td>
-              <td>{crypto.price}</td>
-              <td>{crypto.trend}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-export default App
+export default App;

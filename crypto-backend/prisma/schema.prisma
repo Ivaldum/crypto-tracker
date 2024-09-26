@@ -7,17 +7,20 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model User {
+  id        Int           @id @default(autoincrement())
+  email     String        @unique
+  password  String
+  createdAt DateTime      @default(now())
+  cryptos   Cryptocurrency[]
+}
+
 model Cryptocurrency {
   id        Int      @id @default(autoincrement())
   name      String
   symbol    String
   price     Float
   trend     Float
-}
-
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
 }

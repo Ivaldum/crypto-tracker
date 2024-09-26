@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom';
 import { isAuthenticated } from '../utils/auth'; 
 
 interface ProtectedRouteProps {
-    element: React.ReactElement; // Tipo para los elementos de React
+    element: React.ReactElement;
     redirectTo: string;
   }
   

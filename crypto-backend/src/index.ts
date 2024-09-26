@@ -1,6 +1,7 @@
 import express from 'express'
 import { PrismaClient } from '@prisma/client';
 import authRoutes from './routes/authRoutes'
+import cryptoRoutes from './routes/cryptoRoutes';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -9,6 +10,9 @@ app.use(express.json())
 
 // Rutas de autenticación
 app.use('/auth', authRoutes);
+
+// Rutas de criptomonedas (panel de seguimiento)
+app.use('/api', cryptoRoutes);
 
 //Obtener cryptomonedas 
 app.get('/crypto', async (req, res) => {

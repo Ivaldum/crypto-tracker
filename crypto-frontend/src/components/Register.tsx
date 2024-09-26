@@ -12,6 +12,7 @@ const Register: React.FC = () => {
             setMessage('User successfully registered')
         } catch (error) {
             setMessage('login failed')
+            console.log(error)
         }
     }
 

@@ -62,7 +62,6 @@ const Panel: React.FC = () => {
         <h1>Panel de Seguimiento de Criptomonedas</h1>
         {error && <p style={{ color: 'red' }}>{error}</p>} 
     
-        {/* Formulario para añadir nueva criptomoneda */}
         <div>
           <input
             type="text"

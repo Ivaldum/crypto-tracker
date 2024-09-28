@@ -18,7 +18,7 @@ const Register: React.FC = () => {
 
   const handleRegister = async () => {
     try {
-      const response = await axios.post('http://localhost:5173/auth/register', formData);
+      const response = await axios.post('http://localhost:3001/auth/register', formData);
       setMessage('Usuario registrado con éxito');
     } catch (error) {
       setMessage('Error en el registro');

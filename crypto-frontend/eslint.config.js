@@ -19,6 +19,8 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      "css-modules/no-undef-class": 0,
+      "css-modules/no-unused-class": 0,
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 
 const Login: React.FC = () => {
@@ -8,39 +8,43 @@ const Login: React.FC = () => {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post('http://localhost:3001/auth/login', {
+      const response = await axios.post('http://localhost:5173/auth/login', {
         email,
         password,
       });
-
-      // Guardar el token en localStorage
-      const token = response.data.token;
-      localStorage.setItem('token', token);
-
       setMessage('Inicio de sesión exitoso');
+      localStorage.setItem('token', response.data.token);
     } catch (error) {
-      setMessage(error);
-      console.log(error)
+      setMessage('Error en el inicio de sesión');
     }
   };
 
   return (
-    <div>
-      <h2>Iniciar Sesión</h2>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button onClick={handleLogin}>Login</button>
-      {message && <p>{message}</p>}
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
+      <h2 className="text-2xl font-bold mb-4">Iniciar Sesión</h2>
+      <div className="space-y-4">
+        <input
+          type="email"
+          placeholder="Correo Electrónico"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded"
+        />
+        <input
+          type="password"
+          placeholder="Contraseña"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded"
+        />
+        <button
+          onClick={handleLogin}
+          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+        >
+          Iniciar Sesión
+        </button>
+        {message && <p className="text-red-500 mt-4">{message}</p>}
+      </div>
     </div>
   );
 };

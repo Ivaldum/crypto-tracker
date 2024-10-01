@@ -8,11 +8,16 @@ generator client {
 }
 
 model User {
-  id        Int           @id @default(autoincrement())
-  email     String        @unique
+  id        Int      @id @default(autoincrement())
+  firstName String
+  lastName  String
+  birthDate DateTime
+  dni       String   @unique
+  email     String   @unique
   password  String
-  createdAt DateTime      @default(now())
-  cryptos   Cryptocurrency[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cryptos   Cryptocurrency[]  // Relación con criptomonedas
 }
 
 model Cryptocurrency {

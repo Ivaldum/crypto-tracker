@@ -4,30 +4,39 @@ import jwt from 'jsonwebtoken'
 import {Request, Response} from 'express'
 
 const prisma = new PrismaClient();
-const JWT_SECRET = 'clave'
+const JWT_SECRET = process.env.JWT_SECRET || 'tu_secreto_super_seguro';
 
-//Registro de usuarios
+// Registro de nuevos usuarios
 export const register = async (req: Request, res: Response) => {
-    const {email, passsword} = req.body;
+  const { firstName, lastName, birthDate, dni, email, password } = req.body;
 
-    const userExist = await prisma.user.findUnique({where: {email}})
-
-    if (userExist) {
-        return res.status(400).json({message: 'User all ready exist'})
+  try {
+    // Verificar que la contraseña esté presente antes de encriptarla
+    if (!password) {
+      return res.status(400).json({ error: 'La contraseña es requerida.' });
     }
 
-    //Encriptacion
-    const hashedPassword = await bcrypt.hash(passsword, 10)
+    // Encriptar la contraseña con bcrypt
+    const hashedPassword = await bcrypt.hash(password, 10);  // 10 es el número de rondas para generar la sal
 
+    // Crear un nuevo usuario en la base de datos
     const newUser = await prisma.user.create({
-        data: {
-            email,
-            password: hashedPassword
-        }
-    })
+      data: {
+        firstName,
+        lastName,
+        birthDate: new Date(birthDate),
+        dni,
+        email,
+        password: hashedPassword,
+      },
+    });
 
-    return res.status(201).json({message: 'User created', userId: newUser.id})
-}
+    res.status(201).json({ message: 'Usuario registrado con éxito', userId: newUser.id });
+  } catch (error) {
+    console.error('Error en el registro:', error);
+    res.status(400).json({ error: 'No se pudo registrar el usuario' });
+  }
+};
 
 // Login usuarios
 export const login = async (req: Request, res: Response) => {

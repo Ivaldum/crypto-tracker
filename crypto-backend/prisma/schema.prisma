@@ -27,5 +27,6 @@ model Cryptocurrency {
   price     Float
   trend     Float
   userId    Int
+  isFavorite Boolean  @default(false)
   user      User      @relation(fields: [userId], references: [id])
 }

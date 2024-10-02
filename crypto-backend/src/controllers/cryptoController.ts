@@ -39,3 +39,18 @@ export const getCryptos = async (req: Request, res: Response) => {
       res.status(500).json({ error: 'Error interno del servidor al añadir la criptomoneda.' });
     }
 };
+
+export const getUserCryptos = async (req: Request, res: Response) => {
+  const userId = (req as any).userId; // Obtener el ID del usuario autenticado
+
+  try {
+    const cryptos = await prisma.cryptocurrency.findMany({
+      where: { userId },
+    });
+
+    res.json(cryptos); // Devolver las criptomonedas que el usuario sigue
+  } catch (error) {
+    console.error('Error al obtener las criptomonedas:', error);
+    res.status(500).json({ error: 'Error al obtener las criptomonedas' });
+  }
+};

@@ -8,7 +8,7 @@ generator client {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        String      @id @default(uuid())
   firstName String
   lastName  String
   birthDate DateTime
@@ -21,12 +21,11 @@ model User {
 }
 
 model Cryptocurrency {
-  id        Int      @id @default(autoincrement())
+  id        String      @id @default(uuid())
   name      String
   symbol    String
   price     Float
   trend     Float
-  userId    Int
-  isFavorite Boolean  @default(false)
+  userId    String
   user      User      @relation(fields: [userId], references: [id])
 }

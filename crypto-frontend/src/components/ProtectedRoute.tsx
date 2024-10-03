@@ -6,13 +6,13 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const token = getToken(); // Verificamos si hay un token válido
+  const token = getToken();
 
   if (!token) {
-    return <Navigate to="/login" />; // Redirigimos al usuario si no está autenticado
+    return <Navigate to="/login" />;
   }
 
-  return <>{children}</>; // Renderizamos los hijos si está autenticado
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

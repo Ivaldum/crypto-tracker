@@ -14,7 +14,7 @@ const App = () => {
         <Route path="/register" element={<Register />} />
 
         {/* Rutas protegidas */}
-        <Route path="/panel" element={<ProtectedRoute><Panel /></ProtectedRoute>} />
+        <Route path="/panel" element={<ProtectedRoute> <Panel /> </ProtectedRoute>} />
         <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
 
         {/* Redirigir a login por defecto si no se encuentra la ruta */}

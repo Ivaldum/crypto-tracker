@@ -6,7 +6,9 @@ const router = express.Router();
 
 router.get('/cryptos', verifyToken, getCryptos);
 router.get('/cryptos', verifyToken, getUserCryptos);
+
 router.post('/cryptos', verifyToken, addCrypto);
+
 router.delete('/cryptos/:id', verifyToken, deleteCrypto);
 
 export default router;

@@ -1,96 +1,54 @@
 import { Response, Request } from 'express';
-import { PrismaClient } from '@prisma/client';
+import * as cryptoServices from '../services/cryptoServices';
 
-const prisma = new PrismaClient();
-
-export const getCryptos = async (req: Request, res: Response) => {
-    const userId = (req as any).userId;
-  
-    try {
-      const cryptos = await prisma.cryptocurrency.findMany({
-        where: { userId },
-      });
-      res.json(cryptos);
-    } catch (error) {
-      res.status(500).json({ error: 'Error al obtener las criptomonedas' });
-    }
-  };
-
-  export const addCrypto = async (req: Request, res: Response) => {
-    const userId = res.locals.userId; 
-  
-    const { name, symbol, price, trend } = req.body;
-  
-    if (!userId) {
-      return res.status(400).json({ message: 'ID de usuario no válido.' });
-    }
-  
-    try {
-      const newCrypto = await prisma.cryptocurrency.create({
-        data: {
-          name,
-          symbol,
-          price,
-          trend,
-          userId, 
-        },
-      });
-  
-      res.status(201).json(newCrypto);
-    } catch (error) {
-      console.error('Error al añadir la criptomoneda:', error);
-      res.status(500).json({ error: 'Error al añadir la criptomoneda' });
-    }
-  };
-  
-  
-
-export const getUserCryptos = async (req: Request, res: Response) => {
-  const userId = (req as any).userId;
+export const addCrypto = async (req: Request, res: Response) => {
+  const userId = res.locals.userId;
+  const { name, symbol, price, trend } = req.body;
 
   try {
-    const cryptos = await prisma.cryptocurrency.findMany({
-      where: { userId },
-    });
+    const newCrypto = await cryptoServices.addCrypto(userId, name, symbol, price, trend);
+    res.status(201).json(newCrypto);
+  } catch (error) {
+    console.error('Error al añadir la criptomoneda:', error);
+    res.status(500).json({ error: 'Error al añadir la criptomoneda' });
+  }
+};
 
-    res.json(cryptos); 
+export const getCryptos = async (req: Request, res: Response) => {
+  try {
+    const cryptos = await cryptoServices.getCryptos();
+    res.status(200).json(cryptos);
   } catch (error) {
     console.error('Error al obtener las criptomonedas:', error);
     res.status(500).json({ error: 'Error al obtener las criptomonedas' });
   }
 };
 
-export const deleteCrypto = async (req: Request, res: Response) => {
-  const userId = res.locals.userId; 
+export const getUserCryptos = async (req: Request, res: Response) => {
+  const userId = res.locals.userId;
 
   if (!userId) {
     return res.status(400).json({ message: 'ID de usuario no válido.' });
   }
 
-  const cryptoId = req.params.id; 
+  try {
+    const userCryptos = await cryptoServices.getUserCryptos(userId);
+    res.status(200).json(userCryptos);
+  } catch (error) {
+    console.error('Error al obtener las criptomonedas del usuario:', error);
+    res.status(500).json({ error: 'Error al obtener las criptomonedas del usuario' });
+  }
+};
+
+export const deleteCrypto = async (req: Request, res: Response) => {
+  const userId = res.locals.userId;
+  const cryptoId = req.params.id;
 
   try {
-    const crypto = await prisma.cryptocurrency.findFirst({
-      where: {
-        id: cryptoId,    
-        userId: userId,  
-      },
-    });
-
-    if (!crypto) {
-      return res.status(404).json({ message: 'Criptomoneda no encontrada' });
-    }
-
-    await prisma.cryptocurrency.delete({
-      where: {
-        id: cryptoId, 
-      },
-    });
-
-    res.status(200).json({ message: 'Criptomoneda eliminada correctamente' });
+    const deletedCrypto = await cryptoServices.deleteCrypto(cryptoId, userId);
+    res.status(200).json(deletedCrypto);
   } catch (error) {
     console.error('Error al eliminar la criptomoneda:', error);
     res.status(500).json({ error: 'Error al eliminar la criptomoneda' });
   }
 };
-

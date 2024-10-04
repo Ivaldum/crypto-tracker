@@ -1,15 +1,23 @@
-import { Navigate } from 'react-router-dom';
-import { getToken } from '../utils/auth'; 
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+  children: React.ReactNode; // Acepta cualquier tipo de nodo React
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const token = getToken();
+  const { isAuthenticated, isAuthGetter } = useAuth();
+  console.log(isAuthenticated);
+  const location = useLocation();
 
-  if (!token) {
-    return <Navigate to="/login" />;
+  if (!isAuthenticated && isAuthGetter) {
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: location, message: 'Debes iniciar sesión para acceder a esta página' }}
+        replace
+      />
+    );
   }
 
   return <>{children}</>;

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { getToken } from '../utils/auth';
+import { Link } from 'react-router-dom';
 
 interface Crypto {
   id: string;
@@ -71,6 +72,9 @@ const Panel: React.FC = () => {
     <div className="max-w-6xl mx-auto p-6">
       <h1 className="text-3xl font-bold text-center mb-6">Panel de Seguimiento de Criptomonedas</h1>
       {error && <p className="text-red-500 text-center">{error}</p>}
+      <Link to="/favorites">
+        <button className="w-full bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 text-lg my-5">Mis Criptomonedas Favoritas</button>
+      </Link>
       <table className="min-w-full border-collapse border border-gray-200">
         <thead>
           <tr>

@@ -14,7 +14,7 @@ const Login: React.FC = () => {
       });
       setMessage('Inicio de sesión exitoso');
       localStorage.setItem('token', response.data.token);
-    } catch (error) {
+    } catch {
       setMessage('Error en el inicio de sesión');
     }
   };

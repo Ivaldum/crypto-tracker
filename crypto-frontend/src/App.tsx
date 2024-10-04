@@ -4,12 +4,14 @@ import Register from './components/Register';
 import Favorites from './components/Favorites';
 import Panel from './components/Panel';
 import ProtectedRoute from './components/ProtectedRoute';
+import Home from './components/Home';
 
 const App = () => {
   return (
     <Router>
       <Routes>
         {/* Rutas públicas */}
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 

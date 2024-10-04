@@ -84,7 +84,7 @@ const Panel: React.FC = () => {
         <tbody>
           {cryptos.map((crypto) => (
             <tr key={crypto.id} className="hover:bg-gray-100">
-              <td className="border-b border-gray-200 p-4">{crypto.name} {crypto.id}</td>
+              <td className="border-b border-gray-200 p-4">{crypto.name}</td>
               <td className="border-b border-gray-200 p-4">{crypto.symbol}</td>
               <td className="border-b border-gray-200 p-4">
                 {crypto.price !== undefined ? `$${crypto.price.toFixed(2)}` : 'N/A'}

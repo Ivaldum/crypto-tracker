@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import authRoutes from './routes/authRoutes'
 import cryptoRoutes from './routes/cryptoRoutes';
 import { verifyToken } from './middleware/authMiddleware';
+import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -49,6 +50,9 @@ app.post('/api/cryptos', async (req, res) => {
       res.status(500).json({ error: 'No se pudo crear la criptomoneda.' });
     }
   });
+
+//Manejo global de errores
+app.use(errorHandler);
 
 const PORT = 3001;
 

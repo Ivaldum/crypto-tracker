@@ -19,7 +19,13 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
     res.locals.userId = decoded.userId;
 
     next();
-  } catch (error) {
-    return res.status(403).json({ message: 'Token inválido o expirado.' });
+  } catch (error: any) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'El token ha expirado. Por favor, inicia sesión nuevamente.' });
+    } else if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Token inválido. Por favor, inicia sesión nuevamente.' });
+    } else {
+      return res.status(500).json({ message: 'Error en la autenticación del token.' });
+    }
   }
 };

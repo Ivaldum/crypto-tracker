@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
-import authRoutes from './routes/authRoutes'
+import authRoutes from './routes/authRoutes';
 import cryptoRoutes from './routes/cryptoRoutes';
 import { verifyToken } from './middleware/authMiddleware';
 import { errorHandler } from './middleware/errorHandler';
@@ -9,53 +9,26 @@ import { errorHandler } from './middleware/errorHandler';
 const app = express();
 const prisma = new PrismaClient();
 
+// Configurar CORS para permitir solo solicitudes desde el frontend
 app.use(cors({
-  origin: '*',  
-  credentials: true,  
+  origin: 'http://localhost:5173',  // Restringe a tu frontend
+  credentials: true,
 }));
 
-app.use(express.json())
+// Middleware para parsear JSON
+app.use(express.json());
 
 // Rutas de autenticación
 app.use('/auth', authRoutes);
 
-// Rutas de criptomonedas (panel de seguimiento)
+// Rutas de criptomonedas protegidas por el middleware de verificación de token
 app.use('/api', verifyToken, cryptoRoutes);
 
-//Obtener cryptomonedas 
-app.get('/crypto', async (req, res) => {
-    const cryptos = await prisma.cryptocurrency.findMany();
-    res.json(cryptos)
-})
-
-app.post('/api/cryptos', async (req, res) => {
-    const { name, symbol, price, trend } = req.body;
-    const userId = (req as any).userId;
-  
-    try {
-      const newCrypto = await prisma.cryptocurrency.create({
-        data: {
-          name,
-          symbol,
-          price,
-          trend,
-          user: {
-            connect: { id: userId },
-          },
-        },
-      });
-      res.status(201).json(newCrypto);
-    } catch (error) {
-      console.error('Error al crear la criptomoneda:', error);
-      res.status(500).json({ error: 'No se pudo crear la criptomoneda.' });
-    }
-  });
-
-//Manejo global de errores
+// Manejador global de errores
 app.use(errorHandler);
 
-const PORT = 3001;
-
-app.listen(PORT, ()=> {
-    console.log(`server running on port ${PORT}`)
-})
+// Iniciar el servidor
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en el puerto ${PORT}`);
+});

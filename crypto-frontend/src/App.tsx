@@ -1,3 +1,4 @@
+import './app.css';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -6,11 +7,14 @@ import Panel from './components/Panel';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './components/Home';
 import { AuthProvider } from './context/AuthContext';
+import CryptoDetails from './components/CryptoDetails';
+import Navbar from './components/Navbar';
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
+        <Navbar/>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -31,9 +35,17 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+           <Route 
+              path="/crypto/:id" 
+              element={
+                <ProtectedRoute>
+                  <CryptoDetails />
+                </ProtectedRoute>
+              }
+          />
         </Routes>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 };
 

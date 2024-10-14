@@ -16,27 +16,26 @@ const Panel: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchCryptosFromAPI = async () => {
+    const fetchCryptosFromBackend = async () => {
       try {
-        const response = await axios.get('https://api.coincap.io/v2/assets');
-        const data = response.data.data.map((crypto: any) => ({
-          id: crypto.id,
-          name: crypto.name,
-          symbol: crypto.symbol,
-          price: parseFloat(crypto.priceUsd) || 0,
-          changePercent24Hr: parseFloat(crypto.changePercent24Hr) || 0,
-        }));
-        setCryptos(data);
+        const token = getToken();
+        const response = await axios.get('http://localhost:3001/api/cryptos', {
+          headers: {
+            Authorization: `Bearer ${token}`, 
+          },
+        });
+
+        setCryptos(response.data);
       } catch (error) {
-        setError('Error al obtener las criptomonedas de la API');
-        console.error('Error al obtener datos de la API:', error);
+        setError('Error al obtener las criptomonedas del backend');
+        console.error('Error al obtener datos del backend:', error);
       }
     };
 
-    fetchCryptosFromAPI();
+    fetchCryptosFromBackend();
   }, []);
 
-  const addCrypto = async (cryptoId: string) => {
+  const addCrypto = async (id: string) => {
     try {
       const token = getToken();
 
@@ -44,25 +43,25 @@ const Panel: React.FC = () => {
         throw new Error('No se encontró el token de autenticación');
       }
 
-      const cryptoData = cryptos.find(crypto => crypto.id === cryptoId);
+      const cryptoData = cryptos.find(crypto => crypto.id === id);
 
       if (!cryptoData) {
         throw new Error('Criptomoneda no encontrada');
       }
 
       const newCrypto = {
+        id: cryptoData.id,
         name: cryptoData.name,
         symbol: cryptoData.symbol,
         price: cryptoData.price,
         trend: cryptoData.changePercent24Hr,
       };
 
-      const response = await axios.post('http://localhost:3001/api/cryptos', newCrypto, {
+      await axios.post('http://localhost:3001/api/cryptos', newCrypto, {
         headers: {
-          Authorization: `Bearer ${token}`, 
+          Authorization: `Bearer ${token}`,
         },
       });
-
     } catch {
       setError('Error al añadir la criptomoneda');
     }
@@ -72,9 +71,6 @@ const Panel: React.FC = () => {
     <div className="max-w-6xl mx-auto p-6">
       <h1 className="text-3xl font-bold text-center mb-6">Panel de Seguimiento de Criptomonedas</h1>
       {error && <p className="text-red-500 text-center">{error}</p>}
-      <Link to="/favorites">
-        <button className="w-full bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 text-lg my-5">Mis Criptomonedas Favoritas</button>
-      </Link>
       <table className="min-w-full border-collapse border border-gray-200">
         <thead>
           <tr>
@@ -82,7 +78,7 @@ const Panel: React.FC = () => {
             <th className="border-b border-gray-200 text-left p-4">Símbolo</th>
             <th className="border-b border-gray-200 text-left p-4">Precio (USD)</th>
             <th className="border-b border-gray-200 text-left p-4">Cambio 24h (%)</th>
-            <th className="border-b border-gray-200 text-left p-4">Acción</th>
+            <th className="border-b border-gray-200 text-left p-4">Favoritos</th>
           </tr>
         </thead>
         <tbody>
@@ -94,7 +90,9 @@ const Panel: React.FC = () => {
                 {crypto.price !== undefined ? `$${crypto.price.toFixed(2)}` : 'N/A'}
               </td>
               <td className="border-b border-gray-200 p-4">
-                {crypto.changePercent24Hr !== undefined ? `${crypto.changePercent24Hr.toFixed(2)}%` : 'N/A'}
+                <span className={crypto.changePercent24Hr && crypto.changePercent24Hr >= 0 ? 'text-green-500' : 'text-red-500'}>
+                  {crypto.changePercent24Hr !== undefined ? `${crypto.changePercent24Hr.toFixed(2)}%` : 'N/A'}
+                </span>
               </td>
               <td className="border-b border-gray-200 p-4">
                 <button

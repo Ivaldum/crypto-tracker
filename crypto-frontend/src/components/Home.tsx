@@ -11,15 +11,7 @@ const Home: React.FC = () => {
           </Link>
   
           <Link to="/register">
-            <button className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 text-lg">Registrarse</button>
-          </Link>
-  
-          <Link to="/panel">
-            <button className="w-full bg-yellow-500 text-white py-3 rounded-lg hover:bg-yellow-600 text-lg">Panel de Seguimiento</button>
-          </Link>
-  
-          <Link to="/favorites">
-            <button className="w-full bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 text-lg">Mis Criptomonedas Favoritas</button>
+            <button className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-green-600 text-lg">Registrarse</button>
           </Link>
         </div>
       </div>

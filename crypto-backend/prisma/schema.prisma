@@ -21,11 +21,13 @@ model User {
 }
 
 model Cryptocurrency {
-  id        String      @id @default(uuid())
+  id        String  // ID de la criptomoneda
+  userId    String  // ID del usuario
   name      String
   symbol    String
   price     Float
   trend     Float
-  userId    String
-  user      User      @relation(fields: [userId], references: [id])
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@id([id, userId]) // Clave primaria compuesta
 }

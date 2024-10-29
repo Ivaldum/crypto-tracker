@@ -71,7 +71,7 @@ const Panel: React.FC = () => {
     <div className="max-w-6xl mx-auto p-6">
       <h1 className="text-3xl font-bold text-center mb-6">Panel de Seguimiento de Criptomonedas</h1>
       {error && <p className="text-red-500 text-center">{error}</p>}
-      <table className="min-w-full border-collapse border border-gray-200">
+      <table className="table-custom min-w-full border-collapse border border-gray-200">
         <thead>
           <tr>
             <th className="border-b border-gray-200 text-left p-4">Nombre</th>
@@ -97,8 +97,7 @@ const Panel: React.FC = () => {
               <td className="border-b border-gray-200 p-4">
                 <button
                   onClick={() => addCrypto(crypto.id)}
-                  className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-                >
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-300">
                   Agregar
                 </button>
               </td>

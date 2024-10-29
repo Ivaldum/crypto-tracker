@@ -57,7 +57,7 @@ const Favorites: React.FC = () => {
       {error && <p className="text-red-500">{error}</p>}
 
       <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse border border-gray-200">
+        <table className="table-custom min-w-full border-collapse border border-gray-200">
           <thead>
             <tr>
               <th className="border-b border-gray-200 text-left p-4">Nombre</th>
@@ -80,13 +80,13 @@ const Favorites: React.FC = () => {
                 </td>
                 <td className="border-b border-gray-200 p-4 flex space-x-2">
                   <Link to={`/crypto/${crypto.id}`}>
-                    <button className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-300">
+                    <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-300">
                       Ver Detalles
                     </button>
                   </Link>
                   <button
                     onClick={() => removeCrypto(crypto.id)}
-                    className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition duration-300"
+                    className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-300"
                   >
                     Eliminar
                   </button>

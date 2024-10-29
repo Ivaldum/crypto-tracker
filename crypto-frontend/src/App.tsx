@@ -1,12 +1,12 @@
 import './app.css';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import Login from './components/Login';
 import Register from './components/Register';
 import Favorites from './components/Favorites';
 import Panel from './components/Panel';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './components/Home';
-import { AuthProvider } from './context/AuthContext';
 import CryptoDetails from './components/CryptoDetails';
 import Navbar from './components/Navbar';
 

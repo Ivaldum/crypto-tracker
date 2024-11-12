@@ -23,8 +23,25 @@ const Register: React.FC = () => {
       await axios.post('http://localhost:3001/auth/register', formData);
       setMessage('Usuario registrado con éxito');
       navigate('/login');
-    } catch (error) {
-      setMessage('Error en el registro');
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          switch (error.response.status) {
+            case 400:
+              setMessage('Datos inválidos. Por favor revisa tu información.');
+              break;
+            case 409:
+              setMessage('El correo electrónico ya está registrado.');
+              break;
+            default:
+              setMessage('Error en el registro. Por favor intenta nuevamente.');
+          }
+        } else {
+          setMessage('No se pudo conectar con el servidor. Verifica tu conexión.');
+        }
+      } else {
+        setMessage('Error inesperado. Intenta nuevamente.');
+      }
     }
   };
 

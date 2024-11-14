@@ -2,6 +2,7 @@ import axios from "axios";
 import { CryptoProvider } from "./cryptoProvider";
 import { Crypto } from 'src/interfaces/Crypto';
 import prisma from "src/prismaClient";
+import logger from "src/utils/logger";
 
 export class ApiCryptoProvider extends CryptoProvider {
   
@@ -20,7 +21,7 @@ export class ApiCryptoProvider extends CryptoProvider {
         },
       });
     } catch (error) {
-      console.error('Error al agregar la criptomoneda:', error);
+      logger.error(`Error al agregar la criptomoneda para el usuario ${userId}: ${error}`);
       throw new Error('Error al agregar la criptomoneda');
     }
   }
@@ -37,7 +38,7 @@ export class ApiCryptoProvider extends CryptoProvider {
         trend: parseFloat(crypto.changePercent24Hr) || 0, 
       }));
     } catch (error) {
-      console.error('Error al obtener criptomonedas:', error);
+      logger.error(`Error al obtener criptomonedas de la API externa: ${error}`);
       throw new Error('Error al obtener criptomonedas');
     }
   }
@@ -49,7 +50,7 @@ export class ApiCryptoProvider extends CryptoProvider {
           userId: userId,
         },
       });
-
+      logger.info(`Criptomonedas obtenidas para el usuario ${userId}`)
       return cryptos.map((crypto) => ({
         id: crypto.id,
         userId: crypto.userId,
@@ -59,7 +60,7 @@ export class ApiCryptoProvider extends CryptoProvider {
         trend: crypto.trend,
       }));
     } catch (error) {
-      console.error('Error al obtener criptomonedas del usuario:', error);
+      logger.error(`Error al obtener criptomonedas del usuario ${userId}: ${error}`);
       throw new Error('Error al obtener criptomonedas del usuario');
     }
   }
@@ -74,8 +75,9 @@ export class ApiCryptoProvider extends CryptoProvider {
           }
         }
       });
+      logger.info(`Criptomoneda eliminada para el usuario ${userId}: ID ${cryptoId}`);
     } catch (error) {
-      console.error('Error al eliminar la criptomoneda:', error);
+      logger.error(`Error al eliminar la criptomoneda para el usuario ${userId}: ${error}`);
       throw new Error('Error al eliminar la criptomoneda');
     }
   }
@@ -92,10 +94,12 @@ export class ApiCryptoProvider extends CryptoProvider {
       });
 
       if (!crypto) {
+        logger.warn(`Criptomoneda no encontrada para el usuario ${userId}: ID ${id}`);
         throw new Error('Criptomoneda no encontrada');
       }
 
       const historyResponse = await axios.get(`https://api.coincap.io/v2/assets/${id}/history?interval=d1&start=${Date.now() - 6 * 30 * 24 * 60 * 60 * 1000}&end=${Date.now()}`);
+      logger.info(`Detalles de la criptomoneda obtenidos para el usuario ${userId}: ${crypto.name}`);
       
       return {
         crypto: {
@@ -109,7 +113,7 @@ export class ApiCryptoProvider extends CryptoProvider {
         priceHistory: historyResponse.data.data,
       };
     } catch (error) {
-      console.error('Error al obtener detalles de la criptomoneda:', error);
+      logger.error(`Error al obtener detalles de la criptomoneda para el usuario ${userId}: ${error}`);
       throw new Error('Error al obtener detalles de la criptomoneda');
     }
   }

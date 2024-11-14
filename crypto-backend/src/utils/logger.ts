@@ -1,6 +1,5 @@
 import winston from 'winston';
 
-// Crear el formato de los logs
 const logFormat = winston.format.printf(({ level, message, timestamp }) => {
   return `${timestamp} [${level.toUpperCase()}]: ${message}`;
 });
@@ -8,22 +7,24 @@ const logFormat = winston.format.printf(({ level, message, timestamp }) => {
 const logger = winston.createLogger({
   level: process.env.NODE_ENV === 'production' ? 'warn' : 'info',
   format: winston.format.combine(
-    winston.format.timestamp(),
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), 
     logFormat
   ),
   transports: [
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
-        winston.format.simple()
+        logFormat
       ),
     }),
+    // Archivo de errores para niveles "error"
     new winston.transports.File({
       filename: 'logs/error.log',
       level: 'error',
     }),
+    // Archivo combinado para todos los logs
     new winston.transports.File({
-      filename: 'logs/combined.log', 
+      filename: 'logs/combined.log',
     }),
   ],
 });

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import { getToken } from '../utils/auth';
 import { Link } from 'react-router-dom';
@@ -11,11 +11,18 @@ interface Crypto {
   trend: number;
 }
 
+interface SortConfig {
+  key: keyof Crypto;
+  direction: 'asc' | 'desc';
+}
+
 const Favorites: React.FC = () => {
-  const [favoriteCryptos, setFavoriteCryptos] = useState<Crypto[]>([]);
+  const [cryptos, setCryptos] = useState<Crypto[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [sortOrder, setSortOrder] = useState<keyof Crypto>('name');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    key: 'name',
+    direction: 'asc'
+  });
 
   useEffect(() => {
     const fetchFavoriteCryptos = async () => {
@@ -44,7 +51,7 @@ const Favorites: React.FC = () => {
           })
         );
 
-        setFavoriteCryptos(updatedCryptos);
+        setCryptos(updatedCryptos);
       } catch {
         setError('Error al obtener las criptomonedas favoritas');
       }
@@ -53,22 +60,39 @@ const Favorites: React.FC = () => {
     fetchFavoriteCryptos();
   }, []);
 
+  const sortedCryptos = useMemo(() => {
+    const sortedData = [...cryptos];
+    
+    sortedData.sort((a, b) => {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+      
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+      
+      const aString = String(aValue).toLowerCase();
+      const bString = String(bValue).toLowerCase();
+      
+      if (sortConfig.direction === 'asc') {
+        return aString.localeCompare(bString);
+      }
+      return bString.localeCompare(aString);
+    });
+
+    return sortedData;
+  }, [cryptos, sortConfig]);
+
   const handleSort = (column: keyof Crypto) => {
-    if (sortOrder === column) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortOrder(column);
-      setSortDirection('asc');
-    }
-    setFavoriteCryptos([...favoriteCryptos].sort(compare(column)));
+    setSortConfig(prevConfig => ({
+      key: column,
+      direction: prevConfig.key === column && prevConfig.direction === 'asc' ? 'desc' : 'asc'
+    }));
   };
 
-  const compare = (column: keyof Crypto) => (a: Crypto, b: Crypto) => {
-    const order = sortDirection === 'asc' ? 1 : -1;
-    if (typeof a[column] === 'number' && typeof b[column] === 'number') {
-      return order * ((a[column] as number) - (b[column] as number));
-    }
-    return order * String(a[column]).localeCompare(String(b[column]));
+  const getSortSymbol = (column: keyof Crypto) => {
+    if (sortConfig.key !== column) return '';
+    return sortConfig.direction === 'asc' ? '▲' : '▼';
   };
 
   const removeCrypto = async (cryptoId: string) => {
@@ -80,14 +104,10 @@ const Favorites: React.FC = () => {
         },
       });
 
-      setFavoriteCryptos(favoriteCryptos.filter((crypto) => crypto.id !== cryptoId));
+      setCryptos(cryptos.filter((crypto) => crypto.id !== cryptoId));
     } catch (error) {
       setError('Error al eliminar la criptomoneda');
     }
-  };
-
-  const getSortSymbol = (column: keyof Crypto) => {
-    return sortOrder === column ? (sortDirection === 'asc' ? '▲' : '▼') : '';
   };
 
   return (
@@ -127,7 +147,7 @@ const Favorites: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {favoriteCryptos.map((crypto) => (
+            {sortedCryptos.map((crypto) => (
               <tr key={crypto.id} className="hover:bg-gray-100 transition duration-300">
                 <td className="border-b border-gray-200 p-4">{crypto.name}</td>
                 <td className="border-b border-gray-200 p-4">{crypto.symbol}</td>

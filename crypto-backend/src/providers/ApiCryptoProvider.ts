@@ -3,12 +3,6 @@ import { CryptoProvider } from "./cryptoProvider";
 import { Crypto } from 'src/interfaces/Crypto';
 import prisma from "src/prismaClient";
 
-interface CryptoParams {
-  sort?: keyof Crypto; 
-  filter?: string; 
-  direction?: 'asc' | 'desc';
-}
-
 export class ApiCryptoProvider extends CryptoProvider {
   
   async addCrypto(userId: string, id: string, name: string, symbol: string, price: number, trend: number): Promise<Crypto> {
@@ -31,10 +25,10 @@ export class ApiCryptoProvider extends CryptoProvider {
     }
   }
 
-  async getCryptos(params?: CryptoParams): Promise<Crypto[]> { 
+  async getCryptos(): Promise<Crypto[]> { 
     try {
       const response = await axios.get('https://api.coincap.io/v2/assets');
-      let cryptos: Crypto[] = response.data.data.map((crypto: any) => ({
+      return response.data.data.map((crypto: any) => ({
         id: crypto.id,
         userId: '', 
         name: crypto.name,
@@ -42,29 +36,6 @@ export class ApiCryptoProvider extends CryptoProvider {
         price: parseFloat(crypto.priceUsd) || 0,
         trend: parseFloat(crypto.changePercent24Hr) || 0, 
       }));
-
-      // Filtrado
-      if (params?.filter) {
-        const filterValue = params.filter.toLowerCase(); 
-        cryptos = cryptos.filter((crypto) =>
-          crypto.name.toLowerCase().includes(filterValue)
-        );
-      }
-
-      // Ordenamiento con dirección
-      if (params?.sort) {
-        const sortKey: keyof Crypto = params.sort;
-        const direction = params.direction === 'desc' ? -1 : 1;
-
-        cryptos = cryptos.sort((a, b) => {
-          if (sortKey === 'price' || sortKey === 'trend') {
-            return direction * ((b[sortKey] as number) - (a[sortKey] as number));
-          }
-          return direction * (a[sortKey] as string).localeCompare(b[sortKey] as string);
-        });
-      }
-
-      return cryptos;
     } catch (error) {
       console.error('Error al obtener criptomonedas:', error);
       throw new Error('Error al obtener criptomonedas');

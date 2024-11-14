@@ -1,7 +1,7 @@
 import { Crypto } from 'src/interfaces/Crypto';
 
 export abstract class CryptoProvider {
-    abstract getCryptos(params?: { sort?: string; filter?: string }): Promise<Crypto[]>;
+    abstract getCryptos(): Promise<Crypto[]>;
 
     abstract getUserCryptos(userId: string): Promise<Crypto[]>;
 

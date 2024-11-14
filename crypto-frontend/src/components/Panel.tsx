@@ -13,9 +13,13 @@ interface Crypto {
 const Panel: React.FC = () => {
   const [cryptos, setCryptos] = useState<Crypto[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [sortColumn, setSortColumn] = useState<string>('name');
+  const [sortColumn, setSortColumn] = useState<keyof Crypto>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filter, setFilter] = useState<string>('');
+  
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     const fetchCryptosFromBackend = async () => {
@@ -24,11 +28,6 @@ const Panel: React.FC = () => {
         const response = await axios.get('http://localhost:3001/api/cryptos', {
           headers: {
             Authorization: `Bearer ${token}`,
-          },
-          params: {
-            sort: sortColumn,
-            direction: sortDirection,
-            filter: filter,
           },
         });
 
@@ -40,19 +39,103 @@ const Panel: React.FC = () => {
     };
 
     fetchCryptosFromBackend();
-  }, [sortColumn, sortDirection, filter]);
+  }, []);
 
-  const toggleSortDirection = (column: string) => {
+  const sortData = (data: Crypto[]) => {
+    return [...data].sort((a, b) => {
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+
+      if (aValue === undefined || bValue === undefined) return 0;
+
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+
+      const aString = String(aValue).toLowerCase();
+      const bString = String(bValue).toLowerCase();
+      
+      return sortDirection === 'asc' 
+        ? aString.localeCompare(bString)
+        : bString.localeCompare(aString);
+    });
+  };
+
+  const toggleSortDirection = (column: keyof Crypto) => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       setSortColumn(column);
       setSortDirection('asc');
     }
+    setCurrentPage(1); // Reset a la primera página al cambiar el ordenamiento
   };
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilter(e.target.value);
+    setCurrentPage(1); // Reset a la primera página al filtrar
+  };
+
+  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setItemsPerPage(Number(e.target.value));
+    setCurrentPage(1); // Reset a la primera página al cambiar items por página
+  };
+
+  // Filtrar y ordenar datos
+  const filteredAndSortedCryptos = sortData(
+    cryptos.filter(crypto => 
+      crypto.name.toLowerCase().includes(filter.toLowerCase()) ||
+      crypto.symbol.toLowerCase().includes(filter.toLowerCase())
+    )
+  );
+
+  // Calcular datos de paginación
+  const totalItems = filteredAndSortedCryptos.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = filteredAndSortedCryptos.slice(startIndex, endIndex);
+
+  // Funciones de navegación
+  const nextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
+
+  const prevPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Generar números de página para la navegación
+  const getPageNumbers = () => {
+    const delta = 2;
+    const range = [];
+    for (
+      let i = Math.max(2, currentPage - delta);
+      i <= Math.min(totalPages - 1, currentPage + delta);
+      i++
+    ) {
+      range.push(i);
+    }
+
+    if (currentPage - delta > 2) {
+      range.unshift('...');
+    }
+    if (currentPage + delta < totalPages - 1) {
+      range.push('...');
+    }
+
+    if (totalPages > 1) {
+      range.unshift(1);
+      if (totalPages > 1) {
+        range.push(totalPages);
+      }
+    }
+
+    return range;
   };
 
   const addCrypto = async (id: string) => {
@@ -82,24 +165,39 @@ const Panel: React.FC = () => {
       setError('Error al añadir la criptomoneda');
     }
   };
-  
 
   return (
     <div className="max-w-6xl mx-auto p-6">
       <h1 className="text-3xl font-bold text-center mb-6">Panel de Seguimiento de Criptomonedas</h1>
       {error && <p className="text-red-500 text-center">{error}</p>}
 
-      <div className="mb-4 flex justify-between">
-        <div>
-          <label htmlFor="filter" className="mr-2 font-semibold">Filtrar por nombre:</label>
-          <input
-            id="filter"
-            type="text"
-            value={filter}
-            onChange={handleFilterChange}
-            placeholder="Buscar..."
-            className="p-2 border rounded"
-          />
+      <div className="mb-4 flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <div>
+            <label htmlFor="filter" className="mr-2 font-semibold">Filtrar por nombre:</label>
+            <input
+              id="filter"
+              type="text"
+              value={filter}
+              onChange={handleFilterChange}
+              placeholder="Buscar..."
+              className="p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label htmlFor="itemsPerPage" className="mr-2 font-semibold">Items por página:</label>
+            <select
+              id="itemsPerPage"
+              value={itemsPerPage}
+              onChange={handleItemsPerPageChange}
+              className="p-2 border rounded"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -134,7 +232,7 @@ const Panel: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {cryptos.map((crypto) => (
+          {currentItems.map((crypto) => (
             <tr key={crypto.id} className="hover:bg-gray-100">
               <td className="border-b border-gray-200 p-4">{crypto.name}</td>
               <td className="border-b border-gray-200 p-4">{crypto.symbol}</td>
@@ -158,6 +256,53 @@ const Panel: React.FC = () => {
           ))}
         </tbody>
       </table>
+
+      {/* Controles de paginación */}
+      <div className="mt-4 flex justify-center items-center gap-2">
+        <button
+          onClick={prevPage}
+          disabled={currentPage === 1}
+          className={`px-3 py-1 rounded ${
+            currentPage === 1
+              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          Anterior
+        </button>
+        
+        {getPageNumbers().map((pageNum, index) => (
+          <button
+            key={index}
+            onClick={() => typeof pageNum === 'number' ? goToPage(pageNum) : null}
+            className={`px-3 py-1 rounded ${
+              pageNum === currentPage
+                ? 'bg-blue-600 text-white'
+                : pageNum === '...'
+                ? 'bg-white text-gray-600'
+                : 'bg-white text-blue-600 hover:bg-blue-100'
+            }`}
+          >
+            {pageNum}
+          </button>
+        ))}
+
+        <button
+          onClick={nextPage}
+          disabled={currentPage === totalPages}
+          className={`px-3 py-1 rounded ${
+            currentPage === totalPages
+              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          Siguiente
+        </button>
+      </div>
+
+      <div className="mt-2 text-center text-gray-600">
+        Mostrando {startIndex + 1}-{Math.min(endIndex, totalItems)} de {totalItems} items
+      </div>
     </div>
   );
 };

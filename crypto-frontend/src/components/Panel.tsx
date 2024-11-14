@@ -154,6 +154,8 @@ const Panel: React.FC = () => {
         id: cryptoData.id,
         name: cryptoData.name,
         symbol: cryptoData.symbol,
+        trend: cryptoData.trend,
+        price: cryptoData.price,
       };
   
       await axios.post('http://localhost:3001/api/cryptos', newCrypto, {

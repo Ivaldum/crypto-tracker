@@ -27,7 +27,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const token = localStorage.getItem('token');
     setIsAuthGetter(true);
-    console.log('Token obtenido:', token);
     if (token) {
       setIsAuthenticated(true);
     }
@@ -37,7 +36,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       
       localStorage.setItem('token', token); 
-      console.log('Token almacenado:', token); 
       setIsAuthenticated(true); 
     } catch (error) {
       console.error('Error al iniciar sesión:', error);

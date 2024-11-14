@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { getToken } from '../utils/auth';
-import { Link } from 'react-router-dom'; 
+import { Link } from 'react-router-dom';
 
 interface Crypto {
   id: string;
@@ -14,6 +14,8 @@ interface Crypto {
 const Favorites: React.FC = () => {
   const [favoriteCryptos, setFavoriteCryptos] = useState<Crypto[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<keyof Crypto>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     const fetchFavoriteCryptos = async () => {
@@ -25,7 +27,24 @@ const Favorites: React.FC = () => {
           },
         });
 
-        setFavoriteCryptos(response.data);
+        const favoriteData = response.data;
+
+        const updatedCryptos = await Promise.all(
+          favoriteData.map(async (crypto: Crypto) => {
+            try {
+              const { data } = await axios.get(`https://api.coincap.io/v2/assets/${crypto.id}`);
+              return {
+                ...crypto,
+                price: parseFloat(data.data.priceUsd) || crypto.price,
+              };
+            } catch (error) {
+              console.error(`Error al obtener el precio de ${crypto.id}:`, error);
+              return crypto;
+            }
+          })
+        );
+
+        setFavoriteCryptos(updatedCryptos);
       } catch {
         setError('Error al obtener las criptomonedas favoritas');
       }
@@ -34,21 +53,41 @@ const Favorites: React.FC = () => {
     fetchFavoriteCryptos();
   }, []);
 
+  const handleSort = (column: keyof Crypto) => {
+    if (sortOrder === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortOrder(column);
+      setSortDirection('asc');
+    }
+    setFavoriteCryptos([...favoriteCryptos].sort(compare(column)));
+  };
+
+  const compare = (column: keyof Crypto) => (a: Crypto, b: Crypto) => {
+    const order = sortDirection === 'asc' ? 1 : -1;
+    if (typeof a[column] === 'number' && typeof b[column] === 'number') {
+      return order * ((a[column] as number) - (b[column] as number));
+    }
+    return order * String(a[column]).localeCompare(String(b[column]));
+  };
+
   const removeCrypto = async (cryptoId: string) => {
     try {
       const token = getToken();
-      console.log('ID de la criptomoneda a eliminar:', cryptoId); 
       await axios.delete(`http://localhost:3001/api/cryptos/${cryptoId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      setFavoriteCryptos(favoriteCryptos.filter(crypto => crypto.id !== cryptoId));
+      setFavoriteCryptos(favoriteCryptos.filter((crypto) => crypto.id !== cryptoId));
     } catch (error) {
       setError('Error al eliminar la criptomoneda');
-      console.error('Error en la solicitud DELETE:', error);
     }
+  };
+
+  const getSortSymbol = (column: keyof Crypto) => {
+    return sortOrder === column ? (sortDirection === 'asc' ? '▲' : '▼') : '';
   };
 
   return (
@@ -60,10 +99,30 @@ const Favorites: React.FC = () => {
         <table className="table-custom min-w-full border-collapse border border-gray-200">
           <thead>
             <tr>
-              <th className="border-b border-gray-200 text-left p-4">Nombre</th>
-              <th className="border-b border-gray-200 text-left p-4">Símbolo</th>
-              <th className="border-b border-gray-200 text-left p-4">Precio (USD)</th>
-              <th className="border-b border-gray-200 text-left p-4">Tendencia (%)</th>
+              <th
+                className="border-b border-gray-200 text-left p-4 cursor-pointer"
+                onClick={() => handleSort('name')}
+              >
+                Nombre {getSortSymbol('name')}
+              </th>
+              <th
+                className="border-b border-gray-200 text-left p-4 cursor-pointer"
+                onClick={() => handleSort('symbol')}
+              >
+                Símbolo {getSortSymbol('symbol')}
+              </th>
+              <th
+                className="border-b border-gray-200 text-left p-4 cursor-pointer"
+                onClick={() => handleSort('price')}
+              >
+                Precio (USD) {getSortSymbol('price')}
+              </th>
+              <th
+                className="border-b border-gray-200 text-left p-4 cursor-pointer"
+                onClick={() => handleSort('trend')}
+              >
+                Tendencia (%) {getSortSymbol('trend')}
+              </th>
               <th className="border-b border-gray-200 text-left p-4"></th>
             </tr>
           </thead>

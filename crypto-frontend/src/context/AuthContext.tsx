@@ -1,11 +1,11 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+
 
 interface AuthContextType {
   isAuthenticated: boolean;
   isAuthGetter: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (token:string) => void;
   logout: () => void;
 }
 
@@ -33,14 +33,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = (token:string) => {
     try {
-      const response = await axios.post('http://localhost:3001/auth/login', {
-        email,
-        password,
-      });
-
-      const { token } = response.data;
+      
       localStorage.setItem('token', token); 
       console.log('Token almacenado:', token); 
       setIsAuthenticated(true); 

@@ -55,27 +55,24 @@ const Panel: React.FC = () => {
     setFilter(e.target.value);
   };
 
-  // Función `addCrypto` para añadir una criptomoneda a favoritos
   const addCrypto = async (id: string) => {
     try {
       const token = getToken();
       if (!token) {
         throw new Error('No se encontró el token de autenticación');
       }
-
-      const cryptoData = cryptos.find(crypto => crypto.id === id);
+  
+      const cryptoData = cryptos.find((crypto) => crypto.id === id);
       if (!cryptoData) {
         throw new Error('Criptomoneda no encontrada');
       }
-
+  
       const newCrypto = {
         id: cryptoData.id,
         name: cryptoData.name,
         symbol: cryptoData.symbol,
-        price: cryptoData.price,
-        trend: cryptoData.trend,
       };
-
+  
       await axios.post('http://localhost:3001/api/cryptos', newCrypto, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -85,6 +82,7 @@ const Panel: React.FC = () => {
       setError('Error al añadir la criptomoneda');
     }
   };
+  
 
   return (
     <div className="max-w-6xl mx-auto p-6">

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useForm } from 'react-hook-form';
 import { yupResolver} from '@hookform/resolvers/yup'
 import * as yup from 'yup';
-import axios from 'axios';
+import { login as loginServer } from '../services/cryptoService';
 
 // Esquema de validación con Yup
 const schema = yup.object().shape({
@@ -29,13 +29,9 @@ const Login: React.FC = () => {
 
   const onSubmit = async (data: { email: string; password: string }) => {
     try {
-      const response = await axios.post('http://localhost:3001/auth/login', data);
-      const { token } = response.data;
+      const token = await loginServer(data.email, data.password);
 
-      localStorage.setItem('token', token);
-
-      login(data.email, data.password);
-
+      login(token);
       navigate(location.state?.from || '/panel');
     } catch (error: any) {
       setErrorMessage(error.response?.data?.message || 'Error al iniciar sesión, intenta nuevamente');

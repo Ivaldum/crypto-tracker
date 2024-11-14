@@ -2,43 +2,50 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { getToken } from '../utils/auth';
-import { Line } from 'react-chartjs-2'; 
-import { Chart, registerables } from 'chart.js'; 
+import { Line } from 'react-chartjs-2';
+import { Chart, registerables } from 'chart.js';
 
-Chart.register(...registerables); 
+Chart.register(...registerables);
 
 const CryptoDetails: React.FC = () => {
-    const { id } = useParams<{ id: string }>(); 
+    const { id } = useParams<{ id: string }>();
     const [crypto, setCrypto] = useState<any>(null);
     const [priceHistory, setPriceHistory] = useState<any[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const [onFetching, setOnFetching] = useState<any>(false);
+    const [onFetching, setOnFetching] = useState<boolean>(false);
 
     useEffect(() => {
-        if(onFetching) return;
-        const fetchCryptoDetails =  () => {
+        if (onFetching) return;
+
+        const fetchCryptoDetails = async () => {
             try {
-                const token = getToken(); 
-  
+                const token = getToken();
                 if (!token) {
                     throw new Error('No se encontró el token de autenticación');
                 }
-                setOnFetching(true);
-                axios.get(`http://localhost:3001/api/cryptos/${id}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }).then(
-                    cryptoResponse => {
-                        console.log(cryptoResponse.data.crypto)
-                        setCrypto(cryptoResponse.data.crypto); 
-                        setPriceHistory(cryptoResponse.data.priceHistory);
-                    }
-                )
 
+                setOnFetching(true);
+
+                const { data } = await axios.get(`https://api.coincap.io/v2/assets/${id}`);
+                const cryptoData = data.data;
+
+                // Obtener el historial de precios
+                const priceHistoryResponse = await axios.get(`https://api.coincap.io/v2/assets/${id}/history?interval=d1`);
+                const priceHistoryData = priceHistoryResponse.data.data;
+
+                setCrypto({
+                    id: cryptoData.id,
+                    name: cryptoData.name,
+                    symbol: cryptoData.symbol,
+                    price: parseFloat(cryptoData.priceUsd),
+                    trend: parseFloat(cryptoData.changePercent24Hr),
+                });
+                setPriceHistory(priceHistoryData);
             } catch (error) {
                 setError('Error al obtener los detalles de la criptomoneda');
                 console.error('Error:', error);
+            } finally {
+                setOnFetching(false);
             }
         };
 
@@ -47,10 +54,10 @@ const CryptoDetails: React.FC = () => {
 
     const formatDataForChart = () => {
         if (!priceHistory) return { labels: [], datasets: [] };
-  
-        const labels = priceHistory.map((point: any) => new Date(point.date).toLocaleDateString());
+
+        const labels = priceHistory.map((point: any) => new Date(point.time * 1000).toLocaleDateString());
         const data = priceHistory.map((point: any) => parseFloat(point.priceUsd));
-  
+
         return {
             labels,
             datasets: [

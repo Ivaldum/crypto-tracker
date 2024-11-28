@@ -30,4 +30,6 @@ export abstract class CryptoProvider {
     abstract deleteAlert(alertId: string, userId: string): Promise<void>;
 
     abstract checkAlerts(): Promise<void>;
+
+    abstract updateAlert(alertId: string, userId: string, updates: { isActive?: boolean, thresholdPercentage?: number }): Promise<CryptoAlert>;
 }

@@ -28,3 +28,9 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
+
+app._router.stack.forEach(function(r: any){
+    if (r.route && r.route.path){
+        console.log(r.route.path)
+    }
+});

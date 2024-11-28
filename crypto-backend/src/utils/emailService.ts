@@ -1,44 +1,37 @@
 import nodemailer from 'nodemailer';
-import logger from './logger';
+import logger from '../utils/logger';
 
-// Configuración del transportador de email
-const transporter = nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'gmail', // Por ejemplo: 'gmail'
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
+export class EmailService {
+    private transporter: nodemailer.Transporter;
+
+    constructor() {
+        this.transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASSWORD
+            }
+        });
     }
-});
 
-export async function sendEmail(
-    to: string,
-    subject: string,
-    text: string
-): Promise<void> {
-    try {
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to,
-            subject,
-            text
-        };
-
-        await transporter.sendMail(mailOptions);
-        logger.info(`Email enviado exitosamente a ${to}`);
-    } catch (error) {
-        logger.error(`Error al enviar email a ${to}: ${error}`);
-        throw new Error('Error al enviar email');
-    }
-}
-
-// Función para enviar email de prueba y verificar la configuración
-export async function testEmailConnection(): Promise<boolean> {
-    try {
-        await transporter.verify();
-        logger.info('Conexión de email verificada exitosamente');
-        return true;
-    } catch (error) {
-        logger.error(`Error al verificar conexión de email: ${error}`);
-        return false;
+    async sendAlertEmail(to: string, cryptoName: string, currentPrice: number, thresholdPercentage: number) {
+        try {
+            await this.transporter.sendMail({
+                from: process.env.EMAIL_USER,
+                to,
+                subject: `Alerta de Precio - ${cryptoName}`,
+                html: `
+                    <h1>Alerta de Cambio de Precio</h1>
+                    <p>Se ha detectado un cambio significativo en el precio de ${cryptoName}.</p>
+                    <p>Precio actual: $${currentPrice}</p>
+                    <p>Umbral configurado: ${thresholdPercentage}%</p>
+                    <p>Este es un mensaje automático, por favor no responder.</p>
+                `
+            });
+            logger.info(`Alerta enviada por email para ${cryptoName}`);
+        } catch (error) {
+            logger.error(`Error enviando email: ${error}`);
+            throw error;
+        }
     }
 }

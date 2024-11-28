@@ -25,6 +25,19 @@ interface AlertConfig {
   isOpen: boolean;
 }
 
+interface AlertHistory {
+  id: string;
+  price: number;
+  createdAt: string;
+  alert: {
+    cryptocurrency: {
+      name: string;
+      symbol: string;
+    };
+    thresholdPercentage: number;
+  };
+}
+
 const Favorites: React.FC = () => {
   const [cryptos, setCryptos] = useState<Crypto[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +50,8 @@ const Favorites: React.FC = () => {
     thresholdPercentage: 5,
     isOpen: false
   });
+  const [showHistory, setShowHistory] = useState(false);
+  const [alertHistory, setAlertHistory] = useState<AlertHistory[]>([]);
 
   useEffect(() => {
     const fetchFavoriteCryptos = async () => {
@@ -201,11 +216,84 @@ const Favorites: React.FC = () => {
     }
   };
 
+  const fetchAlertHistory = async () => {
+    try {
+      const token = getToken();
+      const response = await axios.get('http://localhost:3001/api/alert-history', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log('Historial recibido:', response.data);
+      setAlertHistory(response.data);
+      setShowHistory(true);
+    } catch (error) {
+      setError('Error al obtener el historial de alertas');
+    }
+  };
+
   return (
     <>
       <div className="max-w-6xl mx-auto p-6">
-        <h2 className="text-3xl text-center font-bold mb-6">Mis Criptomonedas Favoritas</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl font-bold">Mis Criptomonedas Favoritas</h2>
+          <button
+            onClick={fetchAlertHistory}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-300"
+          >
+            Ver Historial de Alertas
+          </button>
+        </div>
         {error && <p className="text-red-500">{error}</p>}
+
+        {/* Tabla de Historial de Alertas */}
+        {showHistory && (
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-2xl font-bold">Historial de Alertas</h3>
+              <button
+                onClick={() => setShowHistory(false)}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              {alertHistory.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">
+                  No hay historial de alertas disponible
+                </p>
+              ) : (
+                <table className="table-custom min-w-full border-collapse border border-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="border-b border-gray-200 text-left p-4">Criptomoneda</th>
+                      <th className="border-b border-gray-200 text-left p-4">Precio (USD)</th>
+                      <th className="border-b border-gray-200 text-left p-4">Umbral (%)</th>
+                      <th className="border-b border-gray-200 text-left p-4">Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {alertHistory.map((history) => (
+                      <tr key={history.id} className="hover:bg-gray-100 transition duration-300">
+                        <td className="border-b border-gray-200 p-4">
+                          {history.alert.cryptocurrency.name} ({history.alert.cryptocurrency.symbol})
+                        </td>
+                        <td className="border-b border-gray-200 p-4">
+                          ${history.price.toFixed(2)}
+                        </td>
+                        <td className="border-b border-gray-200 p-4">
+                          {history.alert.thresholdPercentage}%
+                        </td>
+                        <td className="border-b border-gray-200 p-4">
+                          {new Date(history.createdAt).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           <table className="table-custom min-w-full border-collapse border border-gray-200">

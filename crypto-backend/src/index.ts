@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoutes';
 import cryptoRoutes from './routes/cryptoRoutes';
 import { verifyToken } from './middleware/authMiddleware';
 import { errorHandler } from './middleware/errorHandler';
+import './jobs/alertChecker';
 
 const app = express();
 const prisma = new PrismaClient();

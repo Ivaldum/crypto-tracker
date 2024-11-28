@@ -17,17 +17,30 @@ model User {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  cryptos   Cryptocurrency[]  // Relación con criptomonedas
+  cryptos   Cryptocurrency[]
+  alerts    CryptoAlert[]
 }
 
 model Cryptocurrency {
-  id        String  // ID de la criptomoneda
-  userId    String  // ID del usuario
+  id        String   @id
+  userId    String
   name      String
   symbol    String
   price     Float
   trend     Float
-  user      User    @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  alerts    CryptoAlert[]
 
-  @@id([id, userId]) // Clave primaria compuesta
+  @@unique([id, userId])
 }
+
+model CryptoAlert {
+  id                 String   @id @default(cuid())
+  userId             String
+  cryptoId           String
+  thresholdPercentage Float
+  isActive           Boolean  @default(true)
+  user               User     @relation(fields: [userId], references: [id])
+  cryptocurrency     Cryptocurrency @relation(fields: [cryptoId, userId], references: [id, userId])
+}
+

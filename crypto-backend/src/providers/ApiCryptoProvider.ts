@@ -3,6 +3,8 @@ import { CryptoProvider } from "./cryptoProvider";
 import { Crypto } from 'src/interfaces/Crypto';
 import prisma from "src/prismaClient";
 import logger from "src/utils/logger";
+import { CryptoAlert } from 'src/interfaces/CryptoAlert';
+import { sendEmail } from 'src/utils/emailService';
 
 export class ApiCryptoProvider extends CryptoProvider {
   
@@ -116,5 +118,82 @@ export class ApiCryptoProvider extends CryptoProvider {
       logger.error(`Error al obtener detalles de la criptomoneda para el usuario ${userId}: ${error}`);
       throw new Error('Error al obtener detalles de la criptomoneda');
     }
+  }
+
+  async createAlert(userId: string, cryptoId: string, thresholdPercentage: number): Promise<CryptoAlert> {
+    try {
+      return await prisma.cryptoAlert.create({
+        data: {
+          userId,
+          cryptoId,
+          thresholdPercentage,
+        }
+      });
+    } catch (error) {
+      logger.error(`Error al crear alerta para el usuario ${userId}: ${error}`);
+      throw new Error('Error al crear la alerta');
+    }
+  }
+
+  async getUserAlerts(userId: string): Promise<CryptoAlert[]> {
+    try {
+      return await prisma.cryptoAlert.findMany({
+        where: { userId, isActive: true },
+        include: { cryptocurrency: true }
+      });
+    } catch (error) {
+      logger.error(`Error al obtener alertas del usuario ${userId}: ${error}`);
+      throw new Error('Error al obtener las alertas');
+    }
+  }
+
+  async deleteAlert(alertId: string, userId: string): Promise<void> {
+    try {
+      await prisma.cryptoAlert.delete({
+        where: {
+          id: alertId,
+          userId: userId
+        }
+      });
+    } catch (error) {
+      logger.error(`Error al eliminar alerta ${alertId}: ${error}`);
+      throw new Error('Error al eliminar la alerta');
+    }
+  }
+
+  async checkAlerts(): Promise<void> {
+    try {
+      const activeAlerts = await prisma.cryptoAlert.findMany({
+        where: { isActive: true },
+        include: { cryptocurrency: true, user: true }
+      });
+
+      for (const alert of activeAlerts) {
+        const currentPrice = await this.getCurrentPrice(alert.cryptocurrency.id);
+        const priceChange = ((currentPrice - alert.cryptocurrency.price) / alert.cryptocurrency.price) * 100;
+
+        if (Math.abs(priceChange) >= alert.thresholdPercentage) {
+          await sendEmail(
+            alert.user.email,
+            'Alerta de Precio Crypto',
+            `La criptomoneda ${alert.cryptocurrency.name} ha cambiado ${priceChange.toFixed(2)}%, 
+            superando tu umbral de ${alert.thresholdPercentage}%`
+          );
+
+          await prisma.cryptocurrency.update({
+            where: { id_userId: { id: alert.cryptoId, userId: alert.userId } },
+            data: { price: currentPrice }
+          });
+        }
+      }
+    } catch (error) {
+      logger.error(`Error al verificar alertas: ${error}`);
+      throw new Error('Error al verificar alertas');
+    }
+  }
+
+  private async getCurrentPrice(cryptoId: string): Promise<number> {
+    const response = await axios.get(`https://api.coincap.io/v2/assets/${cryptoId}`);
+    return parseFloat(response.data.data.priceUsd);
   }
 }

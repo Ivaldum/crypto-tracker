@@ -2,9 +2,11 @@ import express from 'express';
 import { CryptoController } from '../controllers/cryptoController';
 import { verifyToken } from 'src/middleware/authMiddleware';
 import { ApiCryptoProvider } from 'src/providers/ApiCryptoProvider';
+import { AlertController } from '../controllers/alertController';
 
 const router = express.Router();
 const cryptoController = new CryptoController(new ApiCryptoProvider());
+const alertController = new AlertController(new ApiCryptoProvider());
 
 // Obtener todas las criptomonedas (protegido)
 router.get('/cryptos', verifyToken, cryptoController.getCryptos);
@@ -20,5 +22,10 @@ router.post('/cryptos', verifyToken, cryptoController.addCrypto);
 
 // Eliminar una criptomoneda específica (protegido)
 router.delete('/cryptos/:id', verifyToken, cryptoController.deleteCrypto);
+
+// Rutas de alertas
+router.post('/alerts', verifyToken, alertController.createAlert);
+router.get('/alerts', verifyToken, alertController.getUserAlerts);
+router.delete('/alerts/:id', verifyToken, alertController.deleteAlert);
 
 export default router;

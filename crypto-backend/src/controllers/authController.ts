@@ -10,6 +10,7 @@ export const register = async (req: Request, res: Response) => {
   const { firstName, lastName, birthDate, dni, email, password } = req.body;
 
   try {
+ 
     if (!firstName || !lastName || !dni || !email || !password) {
       return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }

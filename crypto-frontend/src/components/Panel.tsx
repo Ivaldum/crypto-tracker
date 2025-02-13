@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { getToken } from '../utils/auth';
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { getToken } from "../utils/auth";
 
 interface Crypto {
   id: string;
   name: string;
   symbol: string;
   price?: number;
-  trend?: number; 
+  trend?: number;
 }
 
 const Panel: React.FC = () => {
@@ -23,11 +23,15 @@ const Panel: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  // Añadir estado de loading
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const fetchCryptosFromBackend = async () => {
+      setIsLoading(true);
       try {
         const token = getToken();
-        const response = await axios.get('http://localhost:3001/api/cryptos', {
+        const response = await axios.get("http://localhost:3001/api/cryptos", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -35,8 +39,10 @@ const Panel: React.FC = () => {
 
         setCryptos(response.data);
       } catch (error) {
-        setError('Error al obtener las criptomonedas del backend');
-        console.error('Error al obtener datos del backend:', error);
+        setError("Error al obtener las criptomonedas del backend");
+        console.error("Error al obtener datos del backend:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -50,14 +56,14 @@ const Panel: React.FC = () => {
 
       if (aValue === undefined || bValue === undefined) return 0;
 
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
       }
 
       const aString = String(aValue).toLowerCase();
       const bString = String(bValue).toLowerCase();
-      
-      return sortDirection === 'asc' 
+
+      return sortDirection === "asc"
         ? aString.localeCompare(bString)
         : bString.localeCompare(aString);
     });
@@ -65,10 +71,10 @@ const Panel: React.FC = () => {
 
   const toggleSortDirection = (column: keyof Crypto) => {
     if (sortColumn === column) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortColumn(column);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
     setCurrentPage(1); 
   };
@@ -78,16 +84,19 @@ const Panel: React.FC = () => {
     setCurrentPage(1); 
   };
 
-  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleItemsPerPageChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     setItemsPerPage(Number(e.target.value));
     setCurrentPage(1); 
   };
 
   // Filtrar y ordenar datos
   const filteredAndSortedCryptos = sortData(
-    cryptos.filter(crypto => 
-      crypto.name.toLowerCase().includes(filter.toLowerCase()) ||
-      crypto.symbol.toLowerCase().includes(filter.toLowerCase())
+    cryptos.filter(
+      (crypto) =>
+        crypto.name.toLowerCase().includes(filter.toLowerCase()) ||
+        crypto.symbol.toLowerCase().includes(filter.toLowerCase())
     )
   );
 
@@ -100,11 +109,11 @@ const Panel: React.FC = () => {
 
   // Funciones de navegación
   const nextPage = () => {
-    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
   const prevPage = () => {
-    setCurrentPage(prev => Math.max(prev - 1, 1));
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
   };
 
   const goToPage = (page: number) => {
@@ -124,10 +133,10 @@ const Panel: React.FC = () => {
     }
 
     if (currentPage - delta > 2) {
-      range.unshift('...');
+      range.unshift("...");
     }
     if (currentPage + delta < totalPages - 1) {
-      range.push('...');
+      range.push("...");
     }
 
     if (totalPages > 1) {
@@ -144,14 +153,14 @@ const Panel: React.FC = () => {
     try {
       const token = getToken();
       if (!token) {
-        throw new Error('No se encontró el token de autenticación');
+        throw new Error("No se encontró el token de autenticación");
       }
-  
+
       const cryptoData = cryptos.find((crypto) => crypto.id === id);
       if (!cryptoData) {
-        throw new Error('Criptomoneda no encontrada');
+        throw new Error("Criptomoneda no encontrada");
       }
-  
+
       const newCrypto = {
         id: cryptoData.id,
         name: cryptoData.name,
@@ -159,26 +168,55 @@ const Panel: React.FC = () => {
         trend: cryptoData.trend,
         price: cryptoData.price,
       };
-  
-      await axios.post('http://localhost:3001/api/cryptos', newCrypto, {
+
+      await axios.post("http://localhost:3001/api/cryptos", newCrypto, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
     } catch {
-      setError('Error al añadir la criptomoneda');
+      setError("Error al añadir la criptomoneda");
     }
   };
 
+  // Añadir componente TableSkeleton
+  const TableSkeleton = () => (
+    <tbody>
+      {[...Array(itemsPerPage)].map((_, index) => (
+        <tr key={index} className="animate-pulse">
+          <td className="border-b border-gray-200 p-4">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          </td>
+          <td className="border-b border-gray-200 p-4">
+            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          </td>
+          <td className="border-b border-gray-200 p-4">
+            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+          </td>
+          <td className="border-b border-gray-200 p-4">
+            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          </td>
+          <td className="border-b border-gray-200 p-4">
+            <div className="h-8 bg-gray-200 rounded w-24"></div>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  );
+
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-center mb-6">Panel de Seguimiento de Criptomonedas</h1>
+      <h1 className="text-3xl font-bold text-center mb-6">
+        Panel de Seguimiento de Criptomonedas
+      </h1>
       {error && <p className="text-red-500 text-center">{error}</p>}
 
       <div className="mb-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
           <div>
-            <label htmlFor="filter" className="mr-2 font-semibold">Filtrar por nombre:</label>
+            <label htmlFor="filter" className="mr-2 font-semibold">
+              Filtrar por nombre:
+            </label>
             <input
               id="filter"
               type="text"
@@ -189,7 +227,9 @@ const Panel: React.FC = () => {
             />
           </div>
           <div>
-            <label htmlFor="itemsPerPage" className="mr-2 font-semibold">Items por página:</label>
+            <label htmlFor="itemsPerPage" className="mr-2 font-semibold">
+              Items por página:
+            </label>
             <select
               id="itemsPerPage"
               value={itemsPerPage}
@@ -210,103 +250,133 @@ const Panel: React.FC = () => {
           <tr>
             <th
               className="border-b border-gray-200 text-left p-4 cursor-pointer"
-              onClick={() => toggleSortDirection('name')}
+              onClick={() => toggleSortDirection("name")}
             >
-              Nombre {sortColumn === 'name' && (sortDirection === 'asc' ? '▲' : '▼')}
+              Nombre{" "}
+              {sortColumn === "name" && (sortDirection === "asc" ? "▲" : "▼")}
             </th>
             <th
               className="border-b border-gray-200 text-left p-4 cursor-pointer"
-              onClick={() => toggleSortDirection('symbol')}
+              onClick={() => toggleSortDirection("symbol")}
             >
-              Símbolo {sortColumn === 'symbol' && (sortDirection === 'asc' ? '▲' : '▼')}
+              Símbolo{" "}
+              {sortColumn === "symbol" && (sortDirection === "asc" ? "▲" : "▼")}
             </th>
             <th
               className="border-b border-gray-200 text-left p-4 cursor-pointer"
-              onClick={() => toggleSortDirection('price')}
+              onClick={() => toggleSortDirection("price")}
             >
-              Precio (USD) {sortColumn === 'price' && (sortDirection === 'asc' ? '▲' : '▼')}
+              Precio (USD){" "}
+              {sortColumn === "price" && (sortDirection === "asc" ? "▲" : "▼")}
             </th>
             <th
               className="border-b border-gray-200 text-left p-4 cursor-pointer"
-              onClick={() => toggleSortDirection('trend')}
+              onClick={() => toggleSortDirection("trend")}
             >
-              Cambio 24h (%) {sortColumn === 'trend' && (sortDirection === 'asc' ? '▲' : '▼')}
+              Cambio 24h (%){" "}
+              {sortColumn === "trend" && (sortDirection === "asc" ? "▲" : "▼")}
             </th>
-            <th className="border-b border-gray-200 text-left p-4">Favoritos</th>
+            <th className="border-b border-gray-200 text-left p-4">
+              Favoritos
+            </th>
           </tr>
         </thead>
-        <tbody>
-          {currentItems.map((crypto) => (
-            <tr key={crypto.id} className="hover:bg-gray-100">
-              <td className="border-b border-gray-200 p-4">{crypto.name}</td>
-              <td className="border-b border-gray-200 p-4">{crypto.symbol}</td>
-              <td className="border-b border-gray-200 p-4">
-                {crypto.price !== undefined ? `$${crypto.price.toFixed(2)}` : 'N/A'}
-              </td>
-              <td className="border-b border-gray-200 p-4">
-                <span className={crypto.trend && crypto.trend >= 0 ? 'text-green-500' : 'text-red-500'}>
-                  {crypto.trend !== undefined ? `${crypto.trend.toFixed(2)}%` : 'N/A'}
-                </span>
-              </td>
-              <td className="border-b border-gray-200 p-4">
-                <button
-                  onClick={() => addCrypto(crypto.id)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-300"
-                >
-                  Agregar
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+        {isLoading ? (
+          <TableSkeleton />
+        ) : (
+          <tbody>
+            {currentItems.map((crypto) => (
+              <tr key={crypto.id} className="hover:bg-gray-100">
+                <td className="border-b border-gray-200 p-4">{crypto.name}</td>
+                <td className="border-b border-gray-200 p-4">
+                  {crypto.symbol}
+                </td>
+                <td className="border-b border-gray-200 p-4">
+                  {crypto.price !== undefined
+                    ? `$${crypto.price.toFixed(2)}`
+                    : "N/A"}
+                </td>
+                <td className="border-b border-gray-200 p-4">
+                  <span
+                    className={
+                      crypto.trend && crypto.trend >= 0
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }
+                  >
+                    {crypto.trend !== undefined
+                      ? `${crypto.trend.toFixed(2)}%`
+                      : "N/A"}
+                  </span>
+                </td>
+                <td className="border-b border-gray-200 p-4">
+                  <button
+                    onClick={() => addCrypto(crypto.id)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-300"
+                  >
+                    Agregar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        )}
       </table>
 
-      {/* Controles de paginación */}
-      <div className="mt-4 flex justify-center items-center gap-2">
-        <button
-          onClick={prevPage}
-          disabled={currentPage === 1}
-          className={`px-3 py-1 rounded ${
-            currentPage === 1
-              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
-        >
-          Anterior
-        </button>
-        
-        {getPageNumbers().map((pageNum, index) => (
-          <button
-            key={index}
-            onClick={() => typeof pageNum === 'number' ? goToPage(pageNum) : null}
-            className={`px-3 py-1 rounded ${
-              pageNum === currentPage
-                ? 'bg-blue-600 text-white'
-                : pageNum === '...'
-                ? 'bg-white text-gray-600'
-                : 'bg-white text-blue-600 hover:bg-blue-100'
-            }`}
-          >
-            {pageNum}
-          </button>
-        ))}
+      {/* Mostrar paginación solo cuando no está cargando */}
+      {!isLoading && (
+        <>
+          {/* Controles de paginación */}
+          <div className="mt-4 flex justify-center items-center gap-2">
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 1}
+              className={`px-3 py-1 rounded ${
+                currentPage === 1
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
+            >
+              Anterior
+            </button>
 
-        <button
-          onClick={nextPage}
-          disabled={currentPage === totalPages}
-          className={`px-3 py-1 rounded ${
-            currentPage === totalPages
-              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
-        >
-          Siguiente
-        </button>
-      </div>
+            {getPageNumbers().map((pageNum, index) => (
+              <button
+                key={index}
+                onClick={() =>
+                  typeof pageNum === "number" ? goToPage(pageNum) : null
+                }
+                className={`px-3 py-1 rounded ${
+                  pageNum === currentPage
+                    ? "bg-blue-600 text-white"
+                    : pageNum === "..."
+                    ? "bg-white text-gray-600"
+                    : "bg-white text-blue-600 hover:bg-blue-100"
+                }`}
+              >
+                {pageNum}
+              </button>
+            ))}
 
-      <div className="mt-2 text-center text-gray-600">
-        Mostrando {startIndex + 1}-{Math.min(endIndex, totalItems)} de {totalItems} items
-      </div>
+            <button
+              onClick={nextPage}
+              disabled={currentPage === totalPages}
+              className={`px-3 py-1 rounded ${
+                currentPage === totalPages
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
+            >
+              Siguiente
+            </button>
+          </div>
+
+          <div className="mt-2 text-center text-gray-600">
+            Mostrando {startIndex + 1}-{Math.min(endIndex, totalItems)} de{" "}
+            {totalItems} items
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -13,6 +13,8 @@ interface Crypto {
 const Panel: React.FC = () => {
   const [cryptos, setCryptos] = useState<Crypto[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  //estados para el ordenamiento
   const [sortColumn, setSortColumn] = useState<keyof Crypto>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filter, setFilter] = useState<string>('');
@@ -68,17 +70,17 @@ const Panel: React.FC = () => {
       setSortColumn(column);
       setSortDirection('asc');
     }
-    setCurrentPage(1); // Reset a la primera página al cambiar el ordenamiento
+    setCurrentPage(1); 
   };
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilter(e.target.value);
-    setCurrentPage(1); // Reset a la primera página al filtrar
+    setCurrentPage(1); 
   };
 
   const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setItemsPerPage(Number(e.target.value));
-    setCurrentPage(1); // Reset a la primera página al cambiar items por página
+    setCurrentPage(1); 
   };
 
   // Filtrar y ordenar datos

@@ -148,37 +148,29 @@ const Favorites: React.FC = () => {
 
   const toggleAlert = async (cryptoId: string) => {
     try {
-      const token = getToken();
-      const crypto = cryptos.find(c => c.id === cryptoId);
-      
-      if (!crypto?.hasAlert) {
-        // Crear alerta
-        await axios.post('http://localhost:3001/api/alerts', 
-          {
-            cryptoId,
-            thresholdPercentage: 5
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-      } else if (crypto.alertId) {
-        // Eliminar alerta usando el alertId
-        await axios.delete(`http://localhost:3001/api/alerts/${crypto.alertId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }
+        const token = getToken();
+        const crypto = cryptos.find(c => c.id === cryptoId);
+        
+        if (!crypto?.hasAlert) {
+            // Abrir diálogo de configuración de alerta antes de crearla
+            openAlertConfig(cryptoId);
+        } else if (crypto.alertId) {
+            // Eliminar alerta directamente si ya existe
+            await axios.delete(`http://localhost:3001/api/alerts/${crypto.alertId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
 
-      // Actualizar estado local
-      setCryptos(cryptos.map(crypto => 
-        crypto.id === cryptoId 
-          ? { ...crypto, hasAlert: !crypto.hasAlert }
-          : crypto
-      ));
+            // Actualizar estado local inmediatamente
+            setCryptos(cryptos.map(crypto => 
+                crypto.id === cryptoId 
+                    ? { ...crypto, hasAlert: false, alertId: undefined }
+                    : crypto
+            ));
+        }
     } catch (error) {
-      setError('Error al gestionar la alerta');
+        setError('Error al gestionar la alerta');
     }
-  };
+};
 
   const openAlertConfig = (cryptoId: string, currentThreshold?: number) => {
     setAlertConfig({

@@ -57,9 +57,8 @@ model AlertHistory {
   userId    String
   price     Float
   createdAt DateTime    @default(now())
-  alert     CryptoAlert @relation("AlertToCryptoAlert", fields: [alertId], references: [id])
+  alert     CryptoAlert @relation("AlertToCryptoAlert", fields: [alertId], references: [id], onDelete: Cascade)
   user      User        @relation("UserToAlertHistory", fields: [userId], references: [id])
 
   @@index([alertId, userId])
 }
-

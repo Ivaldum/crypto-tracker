@@ -173,23 +173,37 @@ export class ApiCryptoProvider extends CryptoProvider {
                 where: { isActive: true },
                 include: { cryptocurrency: true, user: true }
             });
-
+    
             for (const alert of activeAlerts) {
-                const currentPrice = await this.getCurrentPrice(alert.cryptocurrency.id);
-                const priceChange = ((currentPrice - alert.cryptocurrency.price) / alert.cryptocurrency.price) * 100;
-
-                if (Math.abs(priceChange) >= alert.thresholdPercentage) {
-                    await this.handleAlert(alert, currentPrice, alert.user);
-
-                    await prisma.cryptocurrency.update({
-                        where: { id_userId: { id: alert.cryptoId, userId: alert.userId } },
-                        data: { price: currentPrice }
-                    });
+                try {
+                    const currentPrice = await this.getCurrentPrice(alert.cryptoId);
+                    const originalPrice = alert.cryptocurrency.price;
+                    const priceChange = ((currentPrice - originalPrice) / originalPrice) * 100;
+    
+                    // Verificar si el valor absoluto del cambio de precio supera el umbral
+                    if (Math.abs(priceChange) >= alert.thresholdPercentage) {
+                        await this.handleAlert(alert, currentPrice, alert.user);
+    
+                        // Actualizar el precio almacenado para futuras comparaciones
+                        await prisma.cryptocurrency.update({
+                            where: { 
+                                id_userId: { 
+                                    id: alert.cryptoId, 
+                                    userId: alert.userId 
+                                } 
+                            },
+                            data: { price: currentPrice }
+                        });
+                    }
+                } catch (errorProcesamientoAlerta) {
+                    logger.error(`Error procesando alerta para cripto ${alert.cryptoId}: ${errorProcesamientoAlerta}`);
+                    // Continuar procesando otras alertas incluso si una falla
+                    continue;
                 }
             }
         } catch (error) {
-            logger.error(`Error al verificar alertas: ${error}`);
-            throw new Error('Error al verificar alertas');
+            logger.error(`Error verificando alertas: ${error}`);
+            throw new Error('Error verificando alertas');
         }
     }
 

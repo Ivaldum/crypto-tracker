@@ -10,23 +10,19 @@ export const register = async (req: Request, res: Response) => {
   const { firstName, lastName, birthDate, dni, email, password } = req.body;
 
   try {
-    // Verificar si los campos obligatorios están presentes
     if (!firstName || !lastName || !dni || !email || !password) {
       return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
 
-    // Validación de correo electrónico
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ error: 'Formato de correo electrónico inválido' });
     }
 
-    // Validación de fecha de nacimiento
     if (isNaN(Date.parse(birthDate)) || new Date(birthDate) > new Date()) {
       return res.status(400).json({ error: 'Fecha de nacimiento inválida' });
     }
 
-    // Validación contraseña segura (longitud mínima de 8 caracteres)
     if (password.length < 8) {
       return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' });
     }

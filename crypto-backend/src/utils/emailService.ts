@@ -48,6 +48,7 @@ export class EmailService {
         } catch (error) {
             logger.error(`Error enviando email: ${error}`);
             throw error;
+
         }
     }
 

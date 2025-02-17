@@ -9,7 +9,7 @@ export class EmailService {
             service: 'gmail',
             auth: {
                 user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS // Corregido para que coincida con la variable en .env
+                pass: process.env.EMAIL_PASS 
             }
         });
     }
@@ -43,6 +43,7 @@ export class EmailService {
             logger.info(`Correo enviado a ${to}: ${subject}`);
         } catch (error) {
             logger.error(`Error enviando email: ${error}`);
+            throw error;
         }
     }
 

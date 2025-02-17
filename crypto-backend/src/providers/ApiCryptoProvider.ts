@@ -128,18 +128,37 @@ export class ApiCryptoProvider extends CryptoProvider {
 
     async createAlert(userId: string, cryptoId: string, thresholdPercentage: number): Promise<CryptoAlert> {
         try {
-            return await prisma.cryptoAlert.create({
+            const alert = await prisma.cryptoAlert.create({
                 data: {
                     userId,
                     cryptoId,
                     thresholdPercentage,
                 }
             });
+    
+            // Obtener el usuario y su email
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { email: true }
+            });
+    
+            if (user?.email) {
+                await this.emailService.sendAlertEmail(
+                    user.email,
+                    cryptoId,
+                    0, // No se necesita precio actual en este caso
+                    thresholdPercentage,
+                    true
+                );
+            }
+    
+            return alert;
         } catch (error) {
             logger.error(`Error al crear alerta para el usuario ${userId}: ${error}`);
             throw new Error('Error al crear la alerta');
         }
     }
+    
 
     async getUserAlerts(userId: string): Promise<CryptoAlert[]> {
         try {
@@ -239,7 +258,8 @@ export class ApiCryptoProvider extends CryptoProvider {
                 user.email,
                 alert.cryptocurrency.name,
                 currentPrice,
-                alert.thresholdPercentage
+                alert.thresholdPercentage,
+                false
             );
 
         } catch (error) {

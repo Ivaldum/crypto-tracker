@@ -1,19 +1,10 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import axios from 'axios';
 import { getToken } from '../utils/auth';
 import { Link } from 'react-router-dom';
 import { Dialog } from '@headlessui/react';
 import { Eye, Bell, BellOff, Trash2, ChevronDown, XCircle } from 'lucide-react';
-
-interface Crypto {
-  id: string;
-  name: string;
-  symbol: string;
-  price: number;
-  trend: number;
-  hasAlert?: boolean;
-  alertId?: string;
-}
+import useCryptoData, { Crypto } from '../hooks/useCryptoData';
 
 interface SortConfig {
   key: keyof Crypto;
@@ -40,8 +31,8 @@ interface AlertHistory {
 }
 
 const Favorites: React.FC = () => {
-  const [cryptos, setCryptos] = useState<Crypto[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  // Usamos el hook para obtener datos centralizados y la función para actualizar el estado
+  const { cryptos, error, setCryptos } = useCryptoData();
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: 'name',
     direction: 'asc'
@@ -54,51 +45,11 @@ const Favorites: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [alertHistory, setAlertHistory] = useState<AlertHistory[]>([]);
 
-  useEffect(() => {
-    const fetchFavoriteCryptos = async () => {
-      try {
-        const token = getToken();
-        const [favoritesResponse, alertsResponse] = await Promise.all([
-          axios.get('http://localhost:3001/api/cryptos/favorites', {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get('http://localhost:3001/api/alerts', {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-        ]);
-
-        const favoriteData = favoritesResponse.data;
-        const alerts = alertsResponse.data;
-        const alertMap = new Map(alerts.map((alert: any) => [alert.cryptoId, alert.id]));
-
-        const updatedCryptos = await Promise.all(
-          favoriteData.map(async (crypto: Crypto) => {
-            try {
-              const { data } = await axios.get(`https://api.coincap.io/v2/assets/${crypto.id}`);
-              return {
-                ...crypto,
-                price: parseFloat(data.data.priceUsd) || crypto.price,
-                hasAlert: alertMap.has(crypto.id),
-                alertId: alertMap.get(crypto.id)
-              };
-            } catch (error) {
-              console.error(`Error al obtener el precio de ${crypto.id}:`, error);
-              return crypto;
-            }
-          })
-        );
-
-        setCryptos(updatedCryptos);
-      } catch {
-        setError('Error al obtener los datos');
-      }
-    };
-
-    fetchFavoriteCryptos();
-  }, []);
+  // Filtramos solo las criptomonedas que son favoritas
+  const favoriteCryptos = cryptos.filter(crypto => crypto.isFavorite);
 
   const sortedCryptos = useMemo(() => {
-    const sortedData = [...cryptos];
+    const sortedData = [...favoriteCryptos];
     
     sortedData.sort((a, b) => {
       const aValue = a[sortConfig.key];
@@ -111,21 +62,13 @@ const Favorites: React.FC = () => {
       const aString = String(aValue).toLowerCase();
       const bString = String(bValue).toLowerCase();
       
-      if (sortConfig.direction === 'asc') {
-        return aString.localeCompare(bString);
-      }
-      return bString.localeCompare(aString);
+      return sortConfig.direction === 'asc'
+        ? aString.localeCompare(bString)
+        : bString.localeCompare(aString);
     });
 
     return sortedData;
-  }, [cryptos, sortConfig]);
-
-  const handleSort = (column: keyof Crypto) => {
-    setSortConfig(prevConfig => ({
-      key: column,
-      direction: prevConfig.key === column && prevConfig.direction === 'asc' ? 'desc' : 'asc'
-    }));
-  };
+  }, [favoriteCryptos, sortConfig]);
 
   const removeCrypto = async (cryptoId: string) => {
     try {
@@ -136,37 +79,40 @@ const Favorites: React.FC = () => {
         },
       });
 
-      setCryptos(cryptos.filter((crypto) => crypto.id !== cryptoId));
+      // Actualizamos el estado global eliminando la cripto
+      setCryptos(prev => prev.filter(crypto => crypto.id !== cryptoId));
     } catch (error) {
-      setError('Error al eliminar la criptomoneda');
+      console.error(error);
     }
   };
 
   const toggleAlert = async (cryptoId: string) => {
     try {
-        const token = getToken();
-        const crypto = cryptos.find(c => c.id === cryptoId);
-        
-        if (!crypto?.hasAlert) {
-            // Abrir diálogo de configuración de alerta antes de crearla
-            openAlertConfig(cryptoId);
-        } else if (crypto.alertId) {
-            // Eliminar alerta directamente si ya existe
-            await axios.delete(`http://localhost:3001/api/alerts/${crypto.alertId}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+      const token = getToken();
+      const crypto = favoriteCryptos.find(c => c.id === cryptoId);
+      
+      if (!crypto?.hasAlert) {
+        // Abrir diálogo de configuración de alerta antes de crearla
+        openAlertConfig(cryptoId);
+      } else if (crypto.alertId) {
+        // Eliminar alerta directamente si ya existe
+        await axios.delete(`http://localhost:3001/api/alerts/${crypto.alertId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-            // Actualizar estado local inmediatamente
-            setCryptos(cryptos.map(crypto => 
-                crypto.id === cryptoId 
-                    ? { ...crypto, hasAlert: false, alertId: undefined }
-                    : crypto
-            ));
-        }
+        // Actualizar estado global inmediatamente
+        setCryptos(prev =>
+          prev.map(crypto =>
+            crypto.id === cryptoId
+              ? { ...crypto, hasAlert: false, alertId: undefined }
+              : crypto
+          )
+        );
+      }
     } catch (error) {
-        setError('Error al gestionar la alerta');
+      console.error(error);
     }
-};
+  };
 
   const openAlertConfig = (cryptoId: string, currentThreshold?: number) => {
     setAlertConfig({
@@ -193,14 +139,14 @@ const Favorites: React.FC = () => {
         }
       );
 
-      setCryptos(cryptos.map(crypto => 
-        crypto.id === alertConfig.cryptoId 
-          ? { ...crypto, hasAlert: true }
-          : crypto
-      ));
+      setCryptos(prev =>
+        prev.map(crypto =>
+          crypto.id === alertConfig.cryptoId ? { ...crypto, hasAlert: true } : crypto
+        )
+      );
       closeAlertConfig();
     } catch (error) {
-      setError('Error al configurar la alerta');
+      console.error(error);
     }
   };
 
@@ -210,11 +156,10 @@ const Favorites: React.FC = () => {
       const response = await axios.get('http://localhost:3001/api/alert-history', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log('Historial recibido:', response.data);
       setAlertHistory(response.data);
       setShowHistory(true);
     } catch (error) {
-      setError('Error al obtener el historial de alertas');
+      console.error(error);
     }
   };
 
@@ -314,7 +259,7 @@ const Favorites: React.FC = () => {
               <tr>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
-                  onClick={() => handleSort('name')}
+                  onClick={() => setSortConfig({ key: 'name', direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
                 >
                   <div className="flex items-center gap-1">
                     Nombre
@@ -325,7 +270,7 @@ const Favorites: React.FC = () => {
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort('symbol')}
+                  onClick={() => setSortConfig({ key: 'symbol', direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
                 >
                   <div className="flex items-center gap-1">
                     Símbolo
@@ -336,7 +281,7 @@ const Favorites: React.FC = () => {
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort('price')}
+                  onClick={() => setSortConfig({ key: 'price', direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
                 >
                   <div className="flex items-center gap-1">
                     Precio (USD)
@@ -347,7 +292,7 @@ const Favorites: React.FC = () => {
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort('trend')}
+                  onClick={() => setSortConfig({ key: 'trend', direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
                 >
                   <div className="flex items-center gap-1">
                     Tendencia (%)

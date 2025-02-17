@@ -1,104 +1,42 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { getToken } from "../utils/auth";
-import { ChevronDown, XCircle } from 'lucide-react';
-
-interface Crypto {
-  id: string;
-  name: string;
-  symbol: string;
-  price?: number;
-  trend?: number;
-  isFavorite?: boolean;
-}
+import { ChevronDown, XCircle } from "lucide-react";
+import useCryptoData, { Crypto } from "../hooks/useCryptoData";
 
 const Panel: React.FC = () => {
-  const [cryptos, setCryptos] = useState<Crypto[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [sortConfig, setSortConfig] = useState<{
-    key: keyof Crypto;
-    direction: 'asc' | 'desc';
-  }>({
-    key: 'name',
-    direction: 'asc'
+  const { cryptos, error, setCryptos } = useCryptoData();
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Crypto; direction: "asc" | "desc" }>({
+    key: "name",
+    direction: "asc",
   });
-  const [filter, setFilter] = useState<string>('');
+  const [filter, setFilter] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [animatingId, setAnimatingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const token = getToken();
-        const [cryptosResponse, favoritesResponse] = await Promise.all([
-          axios.get("http://localhost:3001/api/cryptos", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get("http://localhost:3001/api/cryptos/favorites", {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-        ]);
-
-        const favoriteIds = new Set(favoritesResponse.data.map((fav: Crypto) => fav.id));
-        const cryptosWithFavorites = cryptosResponse.data.map((crypto: Crypto) => ({
-          ...crypto,
-          isFavorite: favoriteIds.has(crypto.id)
-        }));
-
-        setCryptos(cryptosWithFavorites);
-      } catch (error) {
-        setError("Error al obtener las criptomonedas");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  const handleSort = (column: keyof Crypto) => {
-    setSortConfig(prevConfig => ({
-      key: column,
-      direction: prevConfig.key === column && prevConfig.direction === 'asc' ? 'desc' : 'asc'
-    }));
-    setCurrentPage(1);
-  };
-
-  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilter(e.target.value);
-    setCurrentPage(1);
-  };
-
-  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setItemsPerPage(Number(e.target.value));
-    setCurrentPage(1);
-  };
-
-  const sortedAndFilteredCryptos = [...cryptos]
-    .filter(crypto =>
+  const filteredCryptos = cryptos.filter(
+    (crypto) =>
       crypto.name.toLowerCase().includes(filter.toLowerCase()) ||
       crypto.symbol.toLowerCase().includes(filter.toLowerCase())
-    )
-    .sort((a, b) => {
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
-      
-      if (aValue === undefined || bValue === undefined) return 0;
-      
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
-      }
-      
-      const aString = String(aValue).toLowerCase();
-      const bString = String(bValue).toLowerCase();
-      
-      return sortConfig.direction === 'asc'
-        ? aString.localeCompare(bString)
-        : bString.localeCompare(aString);
-    });
+  );
+
+  const sortedAndFilteredCryptos = [...filteredCryptos].sort((a, b) => {
+    const aValue = a[sortConfig.key];
+    const bValue = b[sortConfig.key];
+
+    if (aValue === undefined || bValue === undefined) return 0;
+
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return sortConfig.direction === "asc" ? aValue - bValue : bValue - aValue;
+    }
+
+    const aString = String(aValue).toLowerCase();
+    const bString = String(bValue).toLowerCase();
+
+    return sortConfig.direction === "asc" ? aString.localeCompare(bString) : bString.localeCompare(aString);
+  });
 
   const totalItems = sortedAndFilteredCryptos.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -128,15 +66,12 @@ const Panel: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setCryptos(prevCryptos =>
-        prevCryptos.map(crypto =>
-          crypto.id === id ? { ...crypto, isFavorite: true } : crypto
-        )
+      setCryptos((prev) =>
+        prev.map((crypto) => (crypto.id === id ? { ...crypto, isFavorite: true } : crypto))
       );
 
       setTimeout(() => setAnimatingId(null), 500);
     } catch {
-      setError("Error al añadir la criptomoneda");
       setAnimatingId(null);
     }
   };
@@ -152,14 +87,20 @@ const Panel: React.FC = () => {
             <input
               type="text"
               value={filter}
-              onChange={handleFilterChange}
+              onChange={(e) => {
+                setFilter(e.target.value);
+                setCurrentPage(1);
+              }}
               placeholder="Buscar criptomoneda..."
               className="pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-64 transition-shadow"
             />
           </div>
           <select
             value={itemsPerPage}
-            onChange={handleItemsPerPageChange}
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
             className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value={5}>5 por página</option>
@@ -183,46 +124,66 @@ const Panel: React.FC = () => {
             <tr>
               <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('name')}
+                onClick={() =>
+                  setSortConfig({ key: "name", direction: sortConfig.direction === "asc" ? "desc" : "asc" })
+                }
               >
                 <div className="flex items-center gap-1">
                   Nombre
-                  <ChevronDown size={16} className={`transform transition-transform ${
-                    sortConfig.key === 'name' && sortConfig.direction === 'desc' ? 'rotate-180' : ''
-                  }`} />
+                  <ChevronDown
+                    size={16}
+                    className={`transform transition-transform ${
+                      sortConfig.key === "name" && sortConfig.direction === "desc" ? "rotate-180" : ""
+                    }`}
+                  />
                 </div>
               </th>
               <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('symbol')}
+                onClick={() =>
+                  setSortConfig({ key: "symbol", direction: sortConfig.direction === "asc" ? "desc" : "asc" })
+                }
               >
                 <div className="flex items-center gap-1">
                   Símbolo
-                  <ChevronDown size={16} className={`transform transition-transform ${
-                    sortConfig.key === 'symbol' && sortConfig.direction === 'desc' ? 'rotate-180' : ''
-                  }`} />
+                  <ChevronDown
+                    size={16}
+                    className={`transform transition-transform ${
+                      sortConfig.key === "symbol" && sortConfig.direction === "desc" ? "rotate-180" : ""
+                    }`}
+                  />
                 </div>
               </th>
               <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('price')}
+                onClick={() =>
+                  setSortConfig({ key: "price", direction: sortConfig.direction === "asc" ? "desc" : "asc" })
+                }
               >
                 <div className="flex items-center gap-1">
                   Precio (USD)
-                  <ChevronDown size={16} className={`transform transition-transform ${
-                    sortConfig.key === 'price' && sortConfig.direction === 'desc' ? 'rotate-180' : ''
-                  }`} />
+                  <ChevronDown
+                    size={16}
+                    className={`transform transition-transform ${
+                      sortConfig.key === "price" && sortConfig.direction === "desc" ? "rotate-180" : ""
+                    }`}
+                  />
                 </div>
               </th>
               <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('trend')}
+                onClick={() =>
+                  setSortConfig({ key: "trend", direction: sortConfig.direction === "asc" ? "desc" : "asc" })
+                }
               >
                 <div className="flex items-center gap-1">
                   Cambio 24h (%)
-                  <ChevronDown size={16} className={`transform transition-transform ${
-                    sortConfig.key === 'trend' && sortConfig.direction === 'desc' ? 'rotate-180' : ''
-                  }`} />
+                  <ChevronDown
+                    size={16}
+                    className={`transform transition-transform ${
+                      sortConfig.key === "trend" && sortConfig.direction === "desc" ? "rotate-180" : ""
+                    }`}
+                  />
                 </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -231,68 +192,61 @@ const Panel: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {isLoading ? (
-              [...Array(itemsPerPage)].map((_, index) => (
-                <tr key={index} className="animate-pulse">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="h-8 bg-gray-200 rounded w-24"></div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              currentItems.map((crypto) => (
-                <tr key={crypto.id} className="hover:bg-gray-50 transition-colors duration-150">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-medium text-gray-900">{crypto.name}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {crypto.symbol}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      ${crypto.price?.toFixed(2) ?? 'N/A'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      crypto.trend && crypto.trend >= 0 
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {crypto.trend?.toFixed(2)}%
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => !crypto.isFavorite && addCrypto(crypto.id)}
-                      disabled={crypto.isFavorite}
-                      className={`
-                        px-4 py-2 rounded-lg font-medium transition-all duration-300
-                        ${crypto.isFavorite 
-                          ? 'bg-green-500 text-white cursor-default'
-                          : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
-                        }
-                        ${animatingId === crypto.id ? 'scale-110' : 'scale-100'}
-                      `}
-                    >
-                      {crypto.isFavorite ? '✓ Favoritos' : 'Agregar'}
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
+            {isLoading
+              ? [...Array(itemsPerPage)].map((_, index) => (
+                  <tr key={index} className="animate-pulse">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-8 bg-gray-200 rounded w-24"></div>
+                    </td>
+                  </tr>
+                ))
+              : currentItems.map((crypto) => (
+                  <tr key={crypto.id} className="hover:bg-gray-50 transition-colors duration-150">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="font-medium text-gray-900">{crypto.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{crypto.symbol}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">
+                        ${crypto.price?.toFixed(2) ?? "N/A"}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          crypto.trend && crypto.trend >= 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {crypto.trend?.toFixed(2)}%
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => !crypto.isFavorite && addCrypto(crypto.id)}
+                        disabled={crypto.isFavorite}
+                        className={`
+                          px-4 py-2 rounded-lg font-medium transition-all duration-300
+                          ${crypto.isFavorite ? "bg-green-500 text-white cursor-default" : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"}
+                          ${animatingId === crypto.id ? "scale-110" : "scale-100"}
+                        `}
+                      >
+                        {crypto.isFavorite ? "✓ Favoritos" : "Agregar"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
           </tbody>
         </table>
       </div>
@@ -301,12 +255,12 @@ const Panel: React.FC = () => {
         <div className="mt-6 flex flex-col items-center gap-4">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
               className={`px-4 py-2 rounded-lg transition-colors duration-150 ${
                 currentPage === 1
-                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
               }`}
             >
               Anterior
@@ -315,12 +269,12 @@ const Panel: React.FC = () => {
               Página {currentPage} de {totalPages}
             </span>
             <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
               className={`px-4 py-2 rounded-lg transition-colors duration-150 ${
                 currentPage === totalPages
-                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
               }`}
             >
               Siguiente

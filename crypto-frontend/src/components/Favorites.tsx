@@ -3,6 +3,7 @@ import axios from 'axios';
 import { getToken } from '../utils/auth';
 import { Link } from 'react-router-dom';
 import { Dialog } from '@headlessui/react';
+import { Eye, Bell, BellOff, Trash2, ChevronDown, XCircle } from 'lucide-react';
 
 interface Crypto {
   id: string;
@@ -126,11 +127,6 @@ const Favorites: React.FC = () => {
     }));
   };
 
-  const getSortSymbol = (column: keyof Crypto) => {
-    if (sortConfig.key !== column) return '';
-    return sortConfig.direction === 'asc' ? '▲' : '▼';
-  };
-
   const removeCrypto = async (cryptoId: string) => {
     try {
       const token = getToken();
@@ -226,56 +222,81 @@ const Favorites: React.FC = () => {
     <>
       <div className="max-w-6xl mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold">Mis Criptomonedas Favoritas</h2>
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Mis Criptomonedas Favoritas
+          </h2>
           <button
             onClick={fetchAlertHistory}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-300"
+            className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition duration-300 flex items-center gap-2"
           >
-            Ver Historial de Alertas
+            <Bell size={18} />
+            Historial de Alertas
           </button>
         </div>
-        {error && <p className="text-red-500">{error}</p>}
+        {error && (
+          <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-2 text-red-600">
+            <XCircle size={20} />
+            <p>{error}</p>
+          </div>
+        )}
 
         {/* Tabla de Historial de Alertas */}
         {showHistory && (
-          <div className="mb-8">
+          <div className="mb-8 bg-white rounded-lg shadow-lg p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-2xl font-bold">Historial de Alertas</h3>
+              <h3 className="text-2xl font-bold text-gray-800">Historial de Alertas</h3>
               <button
                 onClick={() => setShowHistory(false)}
-                className="text-gray-600 hover:text-gray-800"
+                className="text-gray-500 hover:text-gray-700 transition-colors"
               >
-                ✕
+                <XCircle size={24} />
               </button>
             </div>
             <div className="overflow-x-auto">
               {alertHistory.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">
+                <div className="text-gray-500 text-center py-8 bg-gray-50 rounded-lg">
                   No hay historial de alertas disponible
-                </p>
+                </div>
               ) : (
-                <table className="table-custom min-w-full border-collapse border border-gray-200">
-                  <thead>
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
                     <tr>
-                      <th className="border-b border-gray-200 text-left p-4">Criptomoneda</th>
-                      <th className="border-b border-gray-200 text-left p-4">Precio (USD)</th>
-                      <th className="border-b border-gray-200 text-left p-4">Umbral (%)</th>
-                      <th className="border-b border-gray-200 text-left p-4">Fecha</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Criptomoneda
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Precio (USD)
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Umbral (%)
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Fecha
+                      </th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="bg-white divide-y divide-gray-200">
                     {alertHistory.map((history) => (
-                      <tr key={history.id} className="hover:bg-gray-100 transition duration-300">
-                        <td className="border-b border-gray-200 p-4">
-                          {history.alert.cryptocurrency.name} ({history.alert.cryptocurrency.symbol})
+                      <tr key={history.id} className="hover:bg-gray-50 transition duration-150">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="font-medium text-gray-900">
+                            {history.alert.cryptocurrency.name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {history.alert.cryptocurrency.symbol}
+                          </div>
                         </td>
-                        <td className="border-b border-gray-200 p-4">
-                          ${history.price.toFixed(2)}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
+                            ${history.price.toFixed(2)}
+                          </div>
                         </td>
-                        <td className="border-b border-gray-200 p-4">
-                          {history.alert.thresholdPercentage}%
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {history.alert.thresholdPercentage}%
+                          </div>
                         </td>
-                        <td className="border-b border-gray-200 p-4">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(history.createdAt).toLocaleString()}
                         </td>
                       </tr>
@@ -287,72 +308,113 @@ const Favorites: React.FC = () => {
           </div>
         )}
 
-        <div className="overflow-x-auto">
-          <table className="table-custom min-w-full border-collapse border border-gray-200">
-            <thead>
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
                 <th
-                  className="border-b border-gray-200 text-left p-4 cursor-pointer"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
                   onClick={() => handleSort('name')}
                 >
-                  Nombre {getSortSymbol('name')}
+                  <div className="flex items-center gap-1">
+                    Nombre
+                    <ChevronDown size={16} className={`transform transition-transform ${
+                      sortConfig.key === 'name' && sortConfig.direction === 'desc' ? 'rotate-180' : ''
+                    }`} />
+                  </div>
                 </th>
                 <th
-                  className="border-b border-gray-200 text-left p-4 cursor-pointer"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                   onClick={() => handleSort('symbol')}
                 >
-                  Símbolo {getSortSymbol('symbol')}
+                  <div className="flex items-center gap-1">
+                    Símbolo
+                    <ChevronDown size={16} className={`transform transition-transform ${
+                      sortConfig.key === 'symbol' && sortConfig.direction === 'desc' ? 'rotate-180' : ''
+                    }`} />
+                  </div>
                 </th>
                 <th
-                  className="border-b border-gray-200 text-left p-4 cursor-pointer"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                   onClick={() => handleSort('price')}
                 >
-                  Precio (USD) {getSortSymbol('price')}
+                  <div className="flex items-center gap-1">
+                    Precio (USD)
+                    <ChevronDown size={16} className={`transform transition-transform ${
+                      sortConfig.key === 'price' && sortConfig.direction === 'desc' ? 'rotate-180' : ''
+                    }`} />
+                  </div>
                 </th>
                 <th
-                  className="border-b border-gray-200 text-left p-4 cursor-pointer"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                   onClick={() => handleSort('trend')}
                 >
-                  Tendencia (%) {getSortSymbol('trend')}
+                  <div className="flex items-center gap-1">
+                    Tendencia (%)
+                    <ChevronDown size={16} className={`transform transition-transform ${
+                      sortConfig.key === 'trend' && sortConfig.direction === 'desc' ? 'rotate-180' : ''
+                    }`} />
+                  </div>
                 </th>
-                <th className="border-b border-gray-200 text-left p-4"></th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
+                </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white divide-y divide-gray-200">
               {sortedCryptos.map((crypto) => (
-                <tr key={crypto.id} className="hover:bg-gray-100 transition duration-300">
-                  <td className="border-b border-gray-200 p-4">{crypto.name}</td>
-                  <td className="border-b border-gray-200 p-4">{crypto.symbol}</td>
-                  <td className="border-b border-gray-200 p-4">${crypto.price.toFixed(2)}</td>
-                  <td className="border-b border-gray-200 p-4">
-                    <span className={crypto.trend >= 0 ? 'text-green-500' : 'text-red-500'}>
+                <tr key={crypto.id} className="hover:bg-gray-50 transition-colors duration-150">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="font-medium text-gray-900">{crypto.name}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {crypto.symbol}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      ${crypto.price.toFixed(2)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      crypto.trend >= 0 
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
                       {crypto.trend.toFixed(2)}%
                     </span>
                   </td>
-                  <td className="border-b border-gray-200 p-4 flex space-x-2">
-                    <Link to={`/crypto/${crypto.id}`}>
-                      <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-300">
-                        Ver Detalles
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={`/crypto/${crypto.id}`}
+                        className="text-blue-600 hover:text-blue-900 transition-colors duration-150"
+                        title="Ver detalles"
+                      >
+                        <Eye size={20} />
+                      </Link>
+                      <button
+                        onClick={() => crypto.hasAlert 
+                          ? toggleAlert(crypto.id) 
+                          : openAlertConfig(crypto.id)
+                        }
+                        className={`transition-colors duration-150 ${
+                          crypto.hasAlert 
+                            ? 'text-yellow-500 hover:text-yellow-700'
+                            : 'text-gray-400 hover:text-gray-600'
+                        }`}
+                        title={crypto.hasAlert ? 'Desactivar alerta' : 'Configurar alerta'}
+                      >
+                        {crypto.hasAlert ? <BellOff size={20} /> : <Bell size={20} />}
                       </button>
-                    </Link>
-                    <button
-                      onClick={() => crypto.hasAlert 
-                        ? toggleAlert(crypto.id) 
-                        : openAlertConfig(crypto.id)}
-                      className={`${
-                        crypto.hasAlert 
-                          ? 'bg-yellow-500 hover:bg-yellow-600' 
-                          : 'bg-gray-500 hover:bg-gray-600'
-                      } text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-300`}
-                    >
-                      {crypto.hasAlert ? 'Desactivar Alerta' : 'Configurar Alerta'}
-                    </button>
-                    <button
-                      onClick={() => removeCrypto(crypto.id)}
-                      className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-300"
-                    >
-                      Eliminar
-                    </button>
+                      <button
+                        onClick={() => removeCrypto(crypto.id)}
+                        className="text-red-500 hover:text-red-700 transition-colors duration-150"
+                        title="Eliminar de favoritos"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -366,14 +428,14 @@ const Favorites: React.FC = () => {
         onClose={closeAlertConfig}
         className="fixed inset-0 z-10 overflow-y-auto"
       >
-        <div className="fixed inset-0 bg-black bg-opacity-30" aria-hidden="true" />
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
         <div className="flex items-center justify-center min-h-screen">
-          <Dialog.Panel className="relative bg-white rounded-lg p-8 max-w-md w-full mx-4">
-            <Dialog.Title className="text-xl font-bold mb-4">
+          <Dialog.Panel className="relative bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-xl">
+            <Dialog.Title className="text-xl font-bold text-gray-900 mb-4">
               Configurar Alerta
             </Dialog.Title>
 
-            <div className="mb-4">
+            <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Porcentaje de cambio para alertar
               </label>
@@ -384,25 +446,25 @@ const Favorites: React.FC = () => {
                   ...prev,
                   thresholdPercentage: parseFloat(e.target.value)
                 }))}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
                 min="0.1"
                 step="0.1"
               />
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 mt-2">
                 Recibirás una alerta cuando el precio cambie más de este porcentaje
               </p>
             </div>
 
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end gap-3">
               <button
                 onClick={closeAlertConfig}
-                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg"
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors duration-150"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleAlertSubmit}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-150"
               >
                 Guardar
               </button>

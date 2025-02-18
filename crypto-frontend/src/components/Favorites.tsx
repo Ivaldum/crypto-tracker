@@ -2,9 +2,9 @@ import { useState, useMemo } from 'react';
 import axios from 'axios';
 import { getToken } from '../utils/auth';
 import { Link } from 'react-router-dom';
-import { Dialog } from '@headlessui/react';
 import { Eye, Bell, BellOff, Trash2, ChevronDown, XCircle } from 'lucide-react';
 import useCryptoData, { Crypto } from '../hooks/useCryptoData';
+import AlertConfigDialog from './AlertConfigDialog';
 
 interface SortConfig {
   key: keyof Crypto;
@@ -42,6 +42,7 @@ const Favorites: React.FC = () => {
     thresholdPercentage: 5,
     isOpen: false
   });
+  const [selectedCrypto, setSelectedCrypto] = useState<Crypto | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [alertHistory, setAlertHistory] = useState<AlertHistory[]>([]);
 
@@ -367,56 +368,18 @@ const Favorites: React.FC = () => {
           </table>
         </div>
       </div>
-
-      <Dialog
-        open={alertConfig.isOpen}
+      <AlertConfigDialog
+        isOpen={alertConfig.isOpen}
         onClose={closeAlertConfig}
-        className="fixed inset-0 z-10 overflow-y-auto"
-      >
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
-        <div className="flex items-center justify-center min-h-screen">
-          <Dialog.Panel className="relative bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-xl">
-            <Dialog.Title className="text-xl font-bold text-gray-900 mb-4">
-              Configurar Alerta
-            </Dialog.Title>
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Porcentaje de cambio para alertar
-              </label>
-              <input
-                type="number"
-                value={alertConfig.thresholdPercentage}
-                onChange={(e) => setAlertConfig(prev => ({
-                  ...prev,
-                  thresholdPercentage: parseFloat(e.target.value)
-                }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
-                min="0.1"
-                step="0.1"
-              />
-              <p className="text-sm text-gray-500 mt-2">
-                Recibirás una alerta cuando el precio cambie más de este porcentaje
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={closeAlertConfig}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors duration-150"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleAlertSubmit}
-                className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-150"
-              >
-                Guardar
-              </button>
-            </div>
-          </Dialog.Panel>
-        </div>
-      </Dialog>
+        thresholdPercentage={alertConfig.thresholdPercentage}
+        onThresholdChange={(value) => setAlertConfig(prev => ({
+          ...prev,
+          thresholdPercentage: value
+        }))}
+        onSubmit={handleAlertSubmit}
+        cryptoName={selectedCrypto?.name}
+        currentPrice={selectedCrypto?.price}
+      />
     </>
   );
 };

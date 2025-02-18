@@ -125,8 +125,8 @@ const CryptoDetails: React.FC = () => {
 
           {priceHistory && (
             <div className="bg-white rounded-lg shadow-lg p-6">
-              <h3 className="text-xl font-medium text-gray-900 mb-6">Evolución del Precio</h3>
-              <div className="h-[400px]">
+              <h3 className="text-xl font-medium text-gray-500 text-center mb-6">Precio historico:</h3>
+              <div className="h-[450px]">
                 <Line key={crypto?.id} data={formatDataForChart()} options={chartOptions} />
               </div>
             </div>

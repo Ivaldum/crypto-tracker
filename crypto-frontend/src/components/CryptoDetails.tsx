@@ -31,7 +31,7 @@ const CryptoDetails: React.FC = () => {
   const formatDataForChart = () => {
     if (!priceHistory) return { labels: [], datasets: [] };
 
-    const labels = priceHistory.map((point: any) => new Date(point.time * 1000).toLocaleDateString());
+    const labels = priceHistory.map((point: any) => new Date(point.time).toLocaleDateString());
     const data = priceHistory.map((point: any) => parseFloat(point.priceUsd));
 
     return {

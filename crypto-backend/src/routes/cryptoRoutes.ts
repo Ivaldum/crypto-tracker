@@ -27,7 +27,6 @@ router.delete('/cryptos/:id', verifyToken, cryptoController.deleteCrypto);
 router.post('/alerts', verifyToken, alertController.createAlert);
 router.get('/alerts', verifyToken, alertController.getUserAlerts);
 router.delete('/alerts/:id', verifyToken, alertController.deleteAlert);
-router.put('/alerts/:id', verifyToken, alertController.updateAlert);
 router.patch('/alerts/:id/toggle', verifyToken, alertController.toggleAlert);
 router.get('/alerts/:id/history', verifyToken, alertController.getAlertHistory);
 router.get('/alert-history', verifyToken, alertController.getAllAlertHistory);

@@ -31,7 +31,6 @@ interface AlertHistory {
 }
 
 const Favorites: React.FC = () => {
-  // Usamos el hook para obtener datos centralizados y la función para actualizar el estado
   const { cryptos, error, setCryptos } = useCryptoData();
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: 'name',
@@ -46,7 +45,6 @@ const Favorites: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [alertHistory, setAlertHistory] = useState<AlertHistory[]>([]);
 
-  // Filtramos solo las criptomonedas que son favoritas
   const favoriteCryptos = cryptos.filter(crypto => crypto.isFavorite);
 
   const sortedCryptos = useMemo(() => {
@@ -80,7 +78,7 @@ const Favorites: React.FC = () => {
         },
       });
 
-      // Actualizamos el estado global eliminando la cripto
+      // Actualizo el estado global eliminando la cripto
       setCryptos(prev => prev.filter(crypto => crypto.id !== cryptoId));
     } catch (error) {
       console.error(error);
@@ -93,7 +91,7 @@ const Favorites: React.FC = () => {
       const crypto = favoriteCryptos.find(c => c.id === cryptoId);
       
       if (!crypto?.hasAlert) {
-        // Abrir diálogo de configuración de alerta antes de crearla
+        // Abrir diálogo de configuración de alerta 
         openAlertConfig(cryptoId);
       } else if (crypto.alertId) {
         // Eliminar alerta directamente si ya existe

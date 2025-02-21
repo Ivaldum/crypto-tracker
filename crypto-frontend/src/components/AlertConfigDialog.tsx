@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
 import { Bell, X, AlertCircle } from 'lucide-react';
 
@@ -21,6 +21,44 @@ const AlertConfigDialog: React.FC<AlertConfigDialogProps> = ({
   cryptoName = '',
   currentPrice,
 }) => {
+  const [inputValue, setInputValue] = useState(thresholdPercentage.toString());
+
+  useEffect(() => {
+    setInputValue(thresholdPercentage.toString());
+  }, [thresholdPercentage]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // Permitir input vacío temporalmente mientras se escribe
+    if (value === '') {
+      setInputValue('');
+      return;
+    }
+    
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue)) {
+      if (numValue >= 0.1 && numValue <= 50) {
+        setInputValue(value);
+        onThresholdChange(numValue);
+      } else if (numValue < 0.1) {
+        setInputValue('0.1');
+        onThresholdChange(0.1);
+      } else if (numValue > 50) {
+        setInputValue('50');
+        onThresholdChange(50);
+      }
+    }
+  };
+
+  // Manejar el input cuando pierde el foco
+  const handleInputBlur = () => {
+    if (inputValue === '') {
+      setInputValue('0.1');
+      onThresholdChange(0.1);
+    }
+  };
+
   return (
     <Dialog
       open={isOpen}
@@ -61,7 +99,7 @@ const AlertConfigDialog: React.FC<AlertConfigDialogProps> = ({
               </div>
             )}
 
-            {/* Threshold Slider */}
+            {/* Threshold Slider and Input */}
             <div className="space-y-3">
               <label className="block text-sm font-medium text-gray-700">
                 Porcentaje de cambio
@@ -76,10 +114,21 @@ const AlertConfigDialog: React.FC<AlertConfigDialogProps> = ({
                   onChange={(e) => onThresholdChange(parseFloat(e.target.value))}
                   className="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
                 />
-                <span className="w-16 px-2 py-1 text-center text-sm font-medium text-gray-900 bg-gray-100 rounded">
-                  {thresholdPercentage}%
-                </span>
+                <div className="flex items-center min-w-20 relative">
+                  <input
+                    type="text"
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    onBlur={handleInputBlur}
+                    className="w-full px-2 py-1 text-center text-sm font-medium text-gray-900 bg-gray-100 rounded border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    aria-label="Porcentaje de umbral"
+                  />
+                  <span className="absolute right-2 text-sm text-gray-500">%</span>
+                </div>
               </div>
+              <p className="text-xs text-gray-500">
+                Ingrese un valor entre 0.1% y 50%
+              </p>
             </div>
           </div>
 

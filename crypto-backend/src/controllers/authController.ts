@@ -60,7 +60,6 @@ export const login = async (req: Request, res: Response) => {
     return res.status(400).json({ message: 'Email y contraseña son obligatorios' });
   }
 
-  // Validar el formato del email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({ message: 'El formato del email no es válido' });

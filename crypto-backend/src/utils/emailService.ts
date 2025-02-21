@@ -20,7 +20,8 @@ export class EmailService {
         currentPrice: number, 
         threshold: number, 
         isCreation: boolean,
-        priceChangePercent?: string
+        priceChangePercent?: string,
+        initialPrice?: number
     ): Promise<void> {
         try {
             let subject, html;
@@ -34,12 +35,27 @@ export class EmailService {
                     <p>Te notificaremos cuando el precio cambie en ±${threshold}%.</p>
                 `;
             } else {
+                const initialPriceDisplay = initialPrice 
+                    ? `$${initialPrice.toFixed(2)}`
+                    : 'No disponible';
+                
+                let priceDifference = '';
+                if (initialPrice) {
+                    const diff = currentPrice - initialPrice;
+                    const sign = diff >= 0 ? '+' : '';
+                    priceDifference = `<p>Diferencia: ${sign}$${diff.toFixed(2)}</p>`;
+                }
+
                 subject = `¡Alerta! Cambio significativo en el precio de ${cryptoName}`;
                 html = `
                     <h2>Alerta de cambio de precio</h2>
                     <p>La criptomoneda <strong>${cryptoName}</strong> ha experimentado un cambio significativo en su precio.</p>
-                    <p>Precio actual: $${currentPrice.toFixed(2)}</p>
-                    <p>Cambio porcentual: ${priceChangePercent || 'significativo'}%</p>
+                    <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
+                        <p><strong>Precio inicial:</strong> ${initialPriceDisplay}</p>
+                        <p><strong>Precio actual:</strong> $${currentPrice.toFixed(2)}</p>
+                        ${priceDifference}
+                        <p><strong>Cambio porcentual:</strong> ${priceChangePercent || 'significativo'}%</p>
+                    </div>
                     <p>Este cambio ha superado el umbral de ±${threshold}% que configuraste.</p>
                 `;
             }

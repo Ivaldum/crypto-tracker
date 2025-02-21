@@ -40,6 +40,7 @@ model CryptoAlert {
   userId              String  
   cryptoId            String
   thresholdPercentage Float
+  initialPrice        Float       // Nuevo campo para almacenar el precio inicial
   isActive            Boolean     @default(true)
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
@@ -50,7 +51,6 @@ model CryptoAlert {
   @@index([userId])
   @@index([cryptoId, userId])
 }
-
 
 model AlertHistory {
   id        String      @id @default(uuid())

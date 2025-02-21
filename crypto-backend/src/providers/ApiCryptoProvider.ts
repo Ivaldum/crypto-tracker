@@ -128,11 +128,15 @@ export class ApiCryptoProvider extends CryptoProvider {
 
     async createAlert(userId: string, cryptoId: string, thresholdPercentage: number): Promise<CryptoAlert> {
         try {
+            // Obtener el precio actual de la criptomoneda
+            const currentPrice = await this.getCurrentPrice(cryptoId);
+            
             const alert = await prisma.cryptoAlert.create({
                 data: {
                     userId,
                     cryptoId,
                     thresholdPercentage,
+                    initialPrice: currentPrice, // Guardamos el precio inicial
                 }
             });
     
@@ -146,7 +150,7 @@ export class ApiCryptoProvider extends CryptoProvider {
                 await this.emailService.sendAlertEmail(
                     user.email,
                     cryptoId,
-                    0, // No se necesita precio actual en este caso
+                    currentPrice,
                     thresholdPercentage,
                     true
                 );
@@ -196,23 +200,16 @@ export class ApiCryptoProvider extends CryptoProvider {
             for (const alert of activeAlerts) {
                 try {
                     const currentPrice = await this.getCurrentPrice(alert.cryptoId);
-                    const originalPrice = alert.cryptocurrency.price;
-                    const priceChange = ((currentPrice - originalPrice) / originalPrice) * 100;
+                    // Usamos el precio inicial almacenado en lugar del precio actual de la criptomoneda
+                    const initialPrice = alert.initialPrice;
+                    const priceChange = ((currentPrice - initialPrice) / initialPrice) * 100;
     
                     // Verificar si el valor absoluto del cambio de precio supera el umbral
                     if (Math.abs(priceChange) >= alert.thresholdPercentage) {
-                        await this.handleAlert(alert, currentPrice, alert.user);
-    
-                        // Actualizar el precio almacenado para futuras comparaciones
-                        await prisma.cryptocurrency.update({
-                            where: { 
-                                id_userId: { 
-                                    id: alert.cryptoId, 
-                                    userId: alert.userId 
-                                } 
-                            },
-                            data: { price: currentPrice }
-                        });
+                        await this.handleAlert(alert, currentPrice, priceChange, alert.user);
+                        
+                        // No actualizamos el precio inicial aquí, ya que queremos mantener
+                        // la referencia al precio con el que se creó la alerta
                     }
                 } catch (errorProcesamientoAlerta) {
                     logger.error(`Error procesando alerta para cripto ${alert.cryptoId}: ${errorProcesamientoAlerta}`);
@@ -228,6 +225,7 @@ export class ApiCryptoProvider extends CryptoProvider {
 
     async updateAlert(alertId: string, userId: string, updates: { isActive?: boolean, thresholdPercentage?: number }): Promise<CryptoAlert> {
         try {
+            // Si estamos actualizando el threshold, mantenemos el precio inicial
             return await prisma.cryptoAlert.update({
                 where: { id: alertId, userId: userId },
                 data: updates
@@ -243,7 +241,7 @@ export class ApiCryptoProvider extends CryptoProvider {
         return parseFloat(response.data.data.priceUsd);
     }
 
-    private async handleAlert(alert: any, currentPrice: number, user: any) {
+    private async handleAlert(alert: any, currentPrice: number, priceChange: number, user: any) {
         try {
             await prisma.alertHistory.create({
                 data: {
@@ -253,13 +251,14 @@ export class ApiCryptoProvider extends CryptoProvider {
                 }
             });
 
-            // Enviar email
+            // Enviar email con información sobre el cambio porcentual
             await this.emailService.sendAlertEmail(
                 user.email,
                 alert.cryptocurrency.name,
                 currentPrice,
                 alert.thresholdPercentage,
-                false
+                false,
+                priceChange.toFixed(2) // Añadimos el cambio porcentual para el email
             );
 
         } catch (error) {

@@ -14,41 +14,46 @@ export class EmailService {
         });
     }
 
-    async sendAlertEmail(to: string, cryptoName: string, currentPrice: number, thresholdPercentage: number, isCreation: boolean) {
+    async sendAlertEmail(
+        email: string, 
+        cryptoName: string, 
+        currentPrice: number, 
+        threshold: number, 
+        isCreation: boolean,
+        priceChangePercent?: string
+    ): Promise<void> {
         try {
-            const subject = isCreation 
-                ? `Alerta creada para ${cryptoName}`
-                : `Alerta de Precio - ${cryptoName}`;
-            
-            const body = isCreation 
-                ? `<p>Has creado una alerta para <strong>${cryptoName}</strong> con un umbral del ${thresholdPercentage}%.</p>`
-                : `<p>Se ha detectado un cambio significativo en el precio de <strong>${cryptoName}</strong>.</p>
-                   <p>Precio actual: ${new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(currentPrice)}</p>
-                   <p>Umbral configurado: ${thresholdPercentage}%</p>`;
-    
-            await this.transporter.sendMail({
-                from: process.env.EMAIL_USER,
-                to,
-                subject,
-                html: ` 
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h1 style="color: #333;">${subject}</h1>
-                        ${body}
-                        <hr>
-                        <p style="color: #666; font-size: 12px;">Este es un mensaje automático, por favor no responder.</p>
-                    </div>
-                `
-            });
-    
-            logger.info(`Correo enviado a ${to}: ${subject}`);
-        } catch (error) {
-            logger.error(`Error enviando email: ${error}`);
-            throw error;
-        }
-    }
+            let subject, html;
 
-    private isValidEmail(email: string): boolean {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
+            if (isCreation) {
+                subject = `Nueva alerta configurada para ${cryptoName}`;
+                html = `
+                    <h2>Nueva alerta de criptomoneda configurada</h2>
+                    <p>Has configurado una nueva alerta para <strong>${cryptoName}</strong>.</p>
+                    <p>Precio inicial: $${currentPrice.toFixed(2)}</p>
+                    <p>Te notificaremos cuando el precio cambie en ±${threshold}%.</p>
+                `;
+            } else {
+                subject = `¡Alerta! Cambio significativo en el precio de ${cryptoName}`;
+                html = `
+                    <h2>Alerta de cambio de precio</h2>
+                    <p>La criptomoneda <strong>${cryptoName}</strong> ha experimentado un cambio significativo en su precio.</p>
+                    <p>Precio actual: $${currentPrice.toFixed(2)}</p>
+                    <p>Cambio porcentual: ${priceChangePercent || 'significativo'}%</p>
+                    <p>Este cambio ha superado el umbral de ±${threshold}% que configuraste.</p>
+                `;
+            }
+
+            await this.transporter.sendMail({
+                from: `"Crypto Alerts" <${process.env.EMAIL_USER}>`,
+                to: email,
+                subject,
+                html,
+            });
+
+            logger.info(`Email de alerta enviado a ${email} para ${cryptoName}`);
+        } catch (error) {
+            logger.error(`Error al enviar email de alerta: ${error}`);
+        }
     }
 }

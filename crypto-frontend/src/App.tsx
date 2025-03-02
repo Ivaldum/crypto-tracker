@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Home from './components/Home';
 import CryptoDetails from './components/CryptoDetails';
 import Navbar from './components/Navbar';
+import ResetPassword from './components/NewPassword'
 
 const App: React.FC = () => {
   return (
@@ -43,6 +44,13 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
           />
+          <Route
+          path='/NewPassword'
+          element={
+            <ProtectedRoute>
+              <ResetPassword/>
+            </ProtectedRoute>
+          }/>
         </Routes>
       </AuthProvider>
     </Router>

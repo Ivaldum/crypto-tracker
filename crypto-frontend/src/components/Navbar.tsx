@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LineChart, LogOut, Star } from 'lucide-react';
+import { LineChart, LogOut, Star, Lock } from 'lucide-react'; // Asegúrate de importar el ícono Lock
 
 const Navbar: React.FC = () => {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, sendPasswordResetEmail } = useAuth();
   const location = useLocation();
+
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
@@ -34,6 +35,13 @@ const Navbar: React.FC = () => {
                   activePath={location.pathname} 
                 />
               </div>
+              <button 
+                  onClick={sendPasswordResetEmail}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors duration-200"
+                  >
+              <Lock size={18}/>
+              Cambiar contraseña
+              </button>
               
               <button
                 onClick={logout}

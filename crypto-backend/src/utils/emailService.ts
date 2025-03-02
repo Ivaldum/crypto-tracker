@@ -14,6 +14,7 @@ export class EmailService {
         });
     }
 
+    
     async sendAlertEmail(
         email: string, 
         cryptoName: string, 
@@ -72,4 +73,29 @@ export class EmailService {
             logger.error(`Error al enviar email de alerta: ${error}`);
         }
     }
+
+
+    async sendPasswordResetEmail(email: string, resetLink: string): Promise<void> {
+        try {
+            const subject = 'Restablecimiento de contraseña';
+            const html = `
+                <h2>Restablecimiento de contraseña</h2>
+                <p>Has solicitado restablecer tu contraseña. Haz clic en el enlace de abajo para continuar:</p>
+                <a href="${resetLink}" target="_blank">Restablecer contraseña</a>
+                <p>Si no solicitaste este cambio, ignora este mensaje.</p>
+            `;
+            
+            await this.transporter.sendMail({
+                from: `"Crypto Alerts" <${process.env.EMAIL_USER}>`,
+                to: email,
+                subject,
+                html,
+            });
+            
+            console.log(`Email de restablecimiento enviado a ${email}`);
+        } catch (error) {
+            console.error(`Error al enviar email de restablecimiento: ${error}`);
+        }
+    }
 }
+

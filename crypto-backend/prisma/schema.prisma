@@ -20,6 +20,8 @@ model User {
   cryptos   Cryptocurrency[]
   alerts    CryptoAlert[]
   alertHistory AlertHistory[] @relation("UserToAlertHistory")
+  resetToken  String? 
+
 }
 
 model Cryptocurrency {

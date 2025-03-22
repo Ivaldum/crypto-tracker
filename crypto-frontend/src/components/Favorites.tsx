@@ -3,7 +3,7 @@ import axios from 'axios';
 import { getToken } from '../utils/auth';
 import { Link } from 'react-router-dom';
 import { Dialog } from '@headlessui/react';
-import { Eye, Bell, BellOff, Trash2, ChevronDown, XCircle } from 'lucide-react';
+import { Eye, Bell, BellOff, Trash2, ChevronDown, XCircle, TrendingUp, TrendingDown } from 'lucide-react';
 
 interface Crypto {
   id: string;
@@ -23,6 +23,7 @@ interface SortConfig {
 interface AlertConfig {
   cryptoId: string;
   thresholdPercentage: number;
+  alertType: 'up' | 'down';
   isOpen: boolean;
 }
 
@@ -36,6 +37,7 @@ interface AlertHistory {
       symbol: string;
     };
     thresholdPercentage: number;
+    alertType: 'up' | 'down';
   };
 }
 
@@ -49,6 +51,7 @@ const Favorites: React.FC = () => {
   const [alertConfig, setAlertConfig] = useState<AlertConfig>({
     cryptoId: '',
     thresholdPercentage: 5,
+    alertType: 'up',
     isOpen: false
   });
   const [showHistory, setShowHistory] = useState(false);
@@ -166,12 +169,13 @@ const Favorites: React.FC = () => {
     } catch (error) {
         setError('Error al gestionar la alerta');
     }
-};
+  };
 
   const openAlertConfig = (cryptoId: string, currentThreshold?: number) => {
     setAlertConfig({
       cryptoId,
       thresholdPercentage: currentThreshold || 5,
+      alertType: 'up',
       isOpen: true
     });
   };
@@ -186,7 +190,8 @@ const Favorites: React.FC = () => {
       await axios.post('http://localhost:3001/api/alerts', 
         {
           cryptoId: alertConfig.cryptoId,
-          thresholdPercentage: alertConfig.thresholdPercentage
+          thresholdPercentage: alertConfig.thresholdPercentage,
+          alertType: alertConfig.alertType
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -271,6 +276,9 @@ const Favorites: React.FC = () => {
                         Umbral (%)
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Tipo
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Fecha
                       </th>
                     </tr>
@@ -294,6 +302,16 @@ const Favorites: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
                             {history.alert.thresholdPercentage}%
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm flex items-center ${
+                            history.alert.alertType === 'up' ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {history.alert.alertType === 'up' ? 
+                              <><TrendingUp size={16} className="mr-1" /> Subida</> : 
+                              <><TrendingDown size={16} className="mr-1" /> Bajada</>
+                            }
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -450,8 +468,43 @@ const Favorites: React.FC = () => {
                 min="0.1"
                 step="0.1"
               />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tipo de Alerta
+              </label>
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  onClick={() => setAlertConfig(prev => ({ ...prev, alertType: 'up' }))}
+                  className={`flex-1 p-3 rounded-lg border transition-colors flex items-center justify-center gap-2 ${
+                    alertConfig.alertType === 'up'
+                      ? 'bg-green-50 border-green-500 text-green-700'
+                      : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <TrendingUp size={18} />
+                  <span>Subida</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAlertConfig(prev => ({ ...prev, alertType: 'down' }))}
+                  className={`flex-1 p-3 rounded-lg border transition-colors flex items-center justify-center gap-2 ${
+                    alertConfig.alertType === 'down'
+                      ? 'bg-red-50 border-red-500 text-red-700'
+                      : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <TrendingDown size={18} />
+                  <span>Bajada</span>
+                </button>
+              </div>
               <p className="text-sm text-gray-500 mt-2">
-                Recibirás una alerta cuando el precio cambie más de este porcentaje
+                {alertConfig.alertType === 'up' 
+                  ? 'Te alertaremos cuando el precio suba más del porcentaje indicado'
+                  : 'Te alertaremos cuando el precio baje más del porcentaje indicado'
+                }
               </p>
             </div>
 

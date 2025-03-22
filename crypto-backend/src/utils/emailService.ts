@@ -14,17 +14,31 @@ export class EmailService {
         });
     }
 
-    async sendAlertEmail(to: string, cryptoName: string, currentPrice: number, thresholdPercentage: number, isCreation: boolean) {
+    async sendAlertEmail(
+        to: string, 
+        cryptoName: string, 
+        currentPrice: number, 
+        thresholdPercentage: number, 
+        isCreation: boolean,
+        alertType?: 'up' | 'down'
+    ) {
         try {
+            // Obtener texto descriptivo según el tipo de alerta
+            const alertTypeText = alertType === 'up' 
+                ? 'cuando el precio suba' 
+                : alertType === 'down' 
+                    ? 'cuando el precio baje' 
+                    : 'cuando el precio cambie';
+
             const subject = isCreation 
-                ? `Alerta creada para ${cryptoName}`
-                : `Alerta de Precio - ${cryptoName}`;
+                ? `Alerta creada para ${cryptoName} ${alertTypeText}`
+                : `Alerta de Precio - ${cryptoName} ${alertType === 'up' ? '↑' : '↓'}`;
             
             const body = isCreation 
-                ? `<p>Has creado una alerta para <strong>${cryptoName}</strong> con un umbral del ${thresholdPercentage}%.</p>`
-                : `<p>Se ha detectado un cambio significativo en el precio de <strong>${cryptoName}</strong>.</p>
+                ? `<p>Has creado una alerta para <strong>${cryptoName}</strong> con un umbral del ${thresholdPercentage}% ${alertTypeText}.</p>`
+                : `<p>Se ha detectado un cambio significativo en el precio de <strong>${cryptoName}</strong> ${alertType === 'up' ? 'por encima' : 'por debajo'} del umbral configurado.</p>
                    <p>Precio actual: ${new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(currentPrice)}</p>
-                   <p>Umbral configurado: ${thresholdPercentage}%</p>`;
+                   <p>Umbral configurado: ${thresholdPercentage}% ${alertType === 'up' ? 'de subida' : 'de bajada'}</p>`;
     
             await this.transporter.sendMail({
                 from: process.env.EMAIL_USER,

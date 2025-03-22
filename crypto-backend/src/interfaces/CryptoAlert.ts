@@ -3,7 +3,8 @@ export interface CryptoAlert {
     userId: string;
     cryptoId: string;
     thresholdPercentage: number;
+    alertType: 'up' | 'down';  
     isActive: boolean;
-    createdAt?: Date;
-    updatedAt?: Date;
-}
+    createdAt: Date;
+    updatedAt: Date;
+  }

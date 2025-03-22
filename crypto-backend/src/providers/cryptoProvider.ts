@@ -17,12 +17,16 @@ export abstract class CryptoProvider {
         trend: number
     ): Promise<Crypto>; 
 
-    abstract getCryptoDetails(id: string, userId: string): Promise<{ crypto: Crypto; priceHistory: any[] }>;
+    abstract getCryptoDetails(
+        id: string, 
+        userId: string
+    ): Promise<{ crypto: Crypto; priceHistory: any[] }>;
 
     abstract createAlert(
         userId: string,
         cryptoId: string,
-        thresholdPercentage: number
+        thresholdPercentage: number,
+        alertType: 'up' | 'down'
     ): Promise<CryptoAlert>;
 
     abstract getUserAlerts(userId: string): Promise<CryptoAlert[]>;
@@ -31,5 +35,13 @@ export abstract class CryptoProvider {
 
     abstract checkAlerts(): Promise<void>;
 
-    abstract updateAlert(alertId: string, userId: string, updates: { isActive?: boolean, thresholdPercentage?: number }): Promise<CryptoAlert>;
+    abstract updateAlert(
+        alertId: string, 
+        userId: string, 
+        updates: { 
+            isActive?: boolean, 
+            thresholdPercentage?: number,
+            alertType?: 'up' | 'down'  // Añadir esta propiedad
+        }
+    ): Promise<CryptoAlert>;
 }

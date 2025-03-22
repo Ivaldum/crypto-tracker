@@ -126,17 +126,17 @@ export class ApiCryptoProvider extends CryptoProvider {
         }
     }
 
-    async createAlert(userId: string, cryptoId: string, thresholdPercentage: number): Promise<CryptoAlert> {
+    async createAlert(userId: string, cryptoId: string, thresholdPercentage: number, alertType: 'up' | 'down'): Promise<CryptoAlert> {
         try {
             const alert = await prisma.cryptoAlert.create({
                 data: {
                     userId,
                     cryptoId,
                     thresholdPercentage,
+                    alertType,
                 }
             });
-    
-            // Obtener el usuario y su email
+
             const user = await prisma.user.findUnique({
                 where: { id: userId },
                 select: { email: true }
@@ -146,9 +146,10 @@ export class ApiCryptoProvider extends CryptoProvider {
                 await this.emailService.sendAlertEmail(
                     user.email,
                     cryptoId,
-                    0, // No se necesita precio actual en este caso
+                    0,
                     thresholdPercentage,
-                    true
+                    true,
+                    alertType
                 );
             }
     
@@ -199,8 +200,12 @@ export class ApiCryptoProvider extends CryptoProvider {
                     const originalPrice = alert.cryptocurrency.price;
                     const priceChange = ((currentPrice - originalPrice) / originalPrice) * 100;
     
-                    // Verificar si el valor absoluto del cambio de precio supera el umbral
-                    if (Math.abs(priceChange) >= alert.thresholdPercentage) {
+                    // Verificar si el cambio de precio cumple con las condiciones según el tipo de alerta
+                    const isTriggered = alert.alertType === 'up' 
+                        ? priceChange >= alert.thresholdPercentage  // Alerta para subida
+                        : priceChange <= -alert.thresholdPercentage; // Alerta para bajada
+    
+                    if (isTriggered) {
                         await this.handleAlert(alert, currentPrice, alert.user);
     
                         // Actualizar el precio almacenado para futuras comparaciones
@@ -226,7 +231,7 @@ export class ApiCryptoProvider extends CryptoProvider {
         }
     }
 
-    async updateAlert(alertId: string, userId: string, updates: { isActive?: boolean, thresholdPercentage?: number }): Promise<CryptoAlert> {
+    async updateAlert(alertId: string, userId: string, updates: { isActive?: boolean, thresholdPercentage?: number, alertType?: 'up' | 'down' }): Promise<CryptoAlert> {
         try {
             return await prisma.cryptoAlert.update({
                 where: { id: alertId, userId: userId },
@@ -259,7 +264,8 @@ export class ApiCryptoProvider extends CryptoProvider {
                 alert.cryptocurrency.name,
                 currentPrice,
                 alert.thresholdPercentage,
-                false
+                false,
+                alert.alertType
             );
 
         } catch (error) {

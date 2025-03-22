@@ -7,6 +7,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum AlertType {
+  up
+  down
+}
+
 model User {
   id        String      @id @default(uuid())
   firstName String
@@ -40,6 +45,7 @@ model CryptoAlert {
   userId              String  
   cryptoId            String
   thresholdPercentage Float
+  alertType           AlertType   @default(up)
   isActive            Boolean     @default(true)
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt

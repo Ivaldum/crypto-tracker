@@ -10,15 +10,20 @@ export class AlertController {
 
     createAlert = async (req: Request, res: Response) => {
         const userId = res.locals.userId;
-        const { cryptoId, thresholdPercentage } = req.body;
+        const { cryptoId, thresholdPercentage, alertType } = req.body;
+
+        if (alertType && alertType !== 'up' && alertType !== 'down') {
+            return res.status(400).json({ error: 'El tipo de alerta debe ser "up" o "down"' });
+        }
 
         try {
             const alert = await this.cryptoProvider.createAlert(
                 userId,
                 cryptoId,
-                thresholdPercentage
+                thresholdPercentage,
+                alertType || 'up' 
             );
-            logger.info(`Alerta creada para usuario ${userId}, crypto ${cryptoId}`);
+            logger.info(`Alerta ${alertType || 'up'} creada para usuario ${userId}, crypto ${cryptoId}`);
             res.status(201).json(alert);
         } catch (error) {
             logger.error(`Error al crear alerta: ${error}`);
@@ -54,13 +59,17 @@ export class AlertController {
     updateAlert = async (req: Request, res: Response) => {
         const userId = res.locals.userId;
         const alertId = req.params.id;
-        const { thresholdPercentage, isActive } = req.body;
+        const { thresholdPercentage, isActive, alertType } = req.body;
+
+        if (alertType && alertType !== 'up' && alertType !== 'down') {
+            return res.status(400).json({ error: 'El tipo de alerta debe ser "up" o "down"' });
+        }
 
         try {
             const alert = await this.cryptoProvider.updateAlert(
                 alertId,
                 userId,
-                { thresholdPercentage, isActive }
+                { thresholdPercentage, isActive, alertType }
             );
             logger.info(`Alerta ${alertId} actualizada para usuario ${userId}`);
             res.status(200).json(alert);

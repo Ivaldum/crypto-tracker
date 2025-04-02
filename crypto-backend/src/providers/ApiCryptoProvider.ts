@@ -200,10 +200,9 @@ export class ApiCryptoProvider extends CryptoProvider {
                     const originalPrice = alert.cryptocurrency.price;
                     const priceChange = ((currentPrice - originalPrice) / originalPrice) * 100;
     
-                    // Verificar si el cambio de precio cumple con las condiciones según el tipo de alerta
                     const isTriggered = alert.alertType === 'up' 
-                        ? priceChange >= alert.thresholdPercentage  // Alerta para subida
-                        : priceChange <= -alert.thresholdPercentage; // Alerta para bajada
+                        ? priceChange >= alert.thresholdPercentage 
+                        : priceChange <= -alert.thresholdPercentage; 
     
                     if (isTriggered) {
                         await this.handleAlert(alert, currentPrice, alert.user);
@@ -221,7 +220,6 @@ export class ApiCryptoProvider extends CryptoProvider {
                     }
                 } catch (errorProcesamientoAlerta) {
                     logger.error(`Error procesando alerta para cripto ${alert.cryptoId}: ${errorProcesamientoAlerta}`);
-                    // Continuar procesando otras alertas incluso si una falla
                     continue;
                 }
             }
@@ -258,7 +256,6 @@ export class ApiCryptoProvider extends CryptoProvider {
                 }
             });
 
-            // Enviar email
             await this.emailService.sendAlertEmail(
                 user.email,
                 alert.cryptocurrency.name,

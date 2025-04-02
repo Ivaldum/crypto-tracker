@@ -41,7 +41,7 @@ export abstract class CryptoProvider {
         updates: { 
             isActive?: boolean, 
             thresholdPercentage?: number,
-            alertType?: 'up' | 'down'  // Añadir esta propiedad
+            alertType?: 'up' | 'down' 
         }
     ): Promise<CryptoAlert>;
 }

@@ -23,13 +23,20 @@ router.post('/cryptos', verifyToken, cryptoController.addCrypto);
 // Eliminar una criptomoneda específica (protegido)
 router.delete('/cryptos/:id', verifyToken, cryptoController.deleteCrypto);
 
-// Rutas de alertas
+// Rutas de alertas 
+// Crear una nueva alerta (protegido)
 router.post('/alerts', verifyToken, alertController.createAlert);
+// Obtener todas las alertas del usuario (protegido)
 router.get('/alerts', verifyToken, alertController.getUserAlerts);
+// Obtener una alerta específica (protegido)
 router.delete('/alerts/:id', verifyToken, alertController.deleteAlert);
+// Actualizar una alerta específica (protegido)
 router.put('/alerts/:id', verifyToken, alertController.updateAlert);
+// Activar/desactivar una alerta específica (protegido)
 router.patch('/alerts/:id/toggle', verifyToken, alertController.toggleAlert);
+// Comprobar alertas (protegido)
 router.get('/alerts/:id/history', verifyToken, alertController.getAlertHistory);
+// Comprobar todas las alertas (protegido)
 router.get('/alert-history', verifyToken, alertController.getAllAlertHistory);
 
 export default router;

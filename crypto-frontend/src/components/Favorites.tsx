@@ -57,6 +57,16 @@ const Favorites: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [alertHistory, setAlertHistory] = useState<AlertHistory[]>([]);
 
+  const API_BASE_URL = 'https://rest.coincap.io/v3';
+  const API_KEY = '66bb38c643960e7948541eb2afd961201c06ad4d2d69e6a2ea72c7f89ed0a611';
+
+  const coinCapApi = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+      'Authorization': `Bearer ${API_KEY}`
+    }
+  });
+
   useEffect(() => {
     const fetchFavoriteCryptos = async () => {
       try {
@@ -77,10 +87,11 @@ const Favorites: React.FC = () => {
         const updatedCryptos = await Promise.all(
           favoriteData.map(async (crypto: Crypto) => {
             try {
-              const { data } = await axios.get(`https://api.coincap.io/v2/assets/${crypto.id}`);
+              const { data } = await coinCapApi.get(`/assets/${crypto.id}`);
               return {
                 ...crypto,
                 price: parseFloat(data.data.priceUsd) || crypto.price,
+                trend: parseFloat(data.data.changePercent24Hr) || 0,
                 hasAlert: alertMap.has(crypto.id),
                 alertId: alertMap.get(crypto.id)
               };
@@ -92,10 +103,19 @@ const Favorites: React.FC = () => {
         );
 
         setCryptos(updatedCryptos);
-      } catch {
-        setError('Error al obtener los datos');
-      }
-    };
+      } catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === 429) {
+            setError('Has excedido el límite de solicitudes. Intenta nuevamente más tarde.');
+          } else {
+            setError('Error al obtener los datos de criptomonedas');
+          }
+        } else {
+          setError('Ocurrió un error desconocido');
+        }
+        console.error('Error fetching favorites:', error);
+      }      
+      };
 
     fetchFavoriteCryptos();
   }, []);
@@ -151,15 +171,12 @@ const Favorites: React.FC = () => {
         const crypto = cryptos.find(c => c.id === cryptoId);
         
         if (!crypto?.hasAlert) {
-            // Abrir diálogo de configuración de alerta antes de crearla
             openAlertConfig(cryptoId);
         } else if (crypto.alertId) {
-            // Eliminar alerta directamente si ya existe
             await axios.delete(`http://localhost:3001/api/alerts/${crypto.alertId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-            // Actualizar estado local inmediatamente
             setCryptos(cryptos.map(crypto => 
                 crypto.id === cryptoId 
                     ? { ...crypto, hasAlert: false, alertId: undefined }
@@ -215,7 +232,6 @@ const Favorites: React.FC = () => {
       const response = await axios.get('http://localhost:3001/api/alert-history', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log('Historial recibido:', response.data);
       setAlertHistory(response.data);
       setShowHistory(true);
     } catch (error) {
@@ -245,7 +261,6 @@ const Favorites: React.FC = () => {
           </div>
         )}
 
-        {/* Tabla de Historial de Alertas */}
         {showHistory && (
           <div className="mb-8 bg-white rounded-lg shadow-lg p-6">
             <div className="flex justify-between items-center mb-4">

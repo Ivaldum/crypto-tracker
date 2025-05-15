@@ -15,6 +15,16 @@ const CryptoDetails: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [onFetching, setOnFetching] = useState<boolean>(false);
 
+    const API_BASE_URL = 'https://rest.coincap.io/v3';
+    const API_KEY = '66bb38c643960e7948541eb2afd961201c06ad4d2d69e6a2ea72c7f89ed0a611';
+
+    const coinCapApi = axios.create({
+        baseURL: API_BASE_URL,
+        headers: {
+        'Authorization': `Bearer ${API_KEY}`
+        }
+    });
+
     useEffect(() => {
         if (onFetching) return;
 
@@ -27,10 +37,10 @@ const CryptoDetails: React.FC = () => {
 
                 setOnFetching(true);
 
-                const { data } = await axios.get(`https://api.coincap.io/v2/assets/${id}`);
+                const { data } = await coinCapApi.get(`${API_BASE_URL}/assets/${id}`);
                 const cryptoData = data.data;
 
-                const priceHistoryResponse = await axios.get(`https://api.coincap.io/v2/assets/${id}/history?interval=d1`);
+                const priceHistoryResponse = await coinCapApi.get(`${API_BASE_URL}/assets/${id}/history?interval=d1`);
                 const priceHistoryData = priceHistoryResponse.data.data;
 
                 setCrypto({

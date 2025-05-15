@@ -8,10 +8,20 @@ import { EmailService } from '../utils/emailService';
 
 export class ApiCryptoProvider extends CryptoProvider {
     private emailService: EmailService;
+    private apiKey: string;
+    private apiBaseUrl: string;
 
     constructor() {
         super();
         this.emailService = new EmailService();
+        this.apiKey = '66bb38c643960e7948541eb2afd961201c06ad4d2d69e6a2ea72c7f89ed0a611';
+        this.apiBaseUrl = 'https://rest.coincap.io/v3';
+        axios.interceptors.request.use(config => {
+            config.headers = config.headers || {};
+            config.headers['Authorization'] = `Bearer ${this.apiKey}`;
+            return config;
+        });
+        
     }
 
     async addCrypto(userId: string, id: string, name: string, symbol: string, price: number, trend: number): Promise<Crypto> {
@@ -35,21 +45,30 @@ export class ApiCryptoProvider extends CryptoProvider {
     }
 
     async getCryptos(): Promise<Crypto[]> { 
+        console.log(`${this.apiBaseUrl}/assets`)
         try {
-            const response = await axios.get('https://api.coincap.io/v2/assets');
-            return response.data.data.map((crypto: any) => ({
-                id: crypto.id,
-                userId: '', 
-                name: crypto.name,
-                symbol: crypto.symbol,
-                price: parseFloat(crypto.priceUsd) || 0,
-                trend: parseFloat(crypto.changePercent24Hr) || 0, 
-            }));
+            const response = await axios.get(`${this.apiBaseUrl}/assets`);
+            console.log(`${this.apiBaseUrl}/assets`)
+            console.log('Respuesta CoinCap API:', JSON.stringify(response.data, null, 2));
+    
+            if (response.data && Array.isArray(response.data.data)) {
+                return response.data.data.map((crypto: any) => ({
+                    id: crypto.id,
+                    userId: '', 
+                    name: crypto.name,
+                    symbol: crypto.symbol,
+                    price: parseFloat(crypto.priceUsd) || 0,
+                    trend: parseFloat(crypto.changePercent24Hr) || 0, 
+                }));
+            } else {
+                logger.error('La respuesta de la API no tiene la estructura esperada:', response.data);
+                throw new Error('Error al obtener criptomonedas: estructura de respuesta inesperada');
+            }
         } catch (error) {
             logger.error(`Error al obtener criptomonedas de la API externa: ${error}`);
             throw new Error('Error al obtener criptomonedas');
         }
-    }
+    }    
 
     async getUserCryptos(userId: string): Promise<Crypto[]> { 
         try {
@@ -106,7 +125,19 @@ export class ApiCryptoProvider extends CryptoProvider {
                 throw new Error('Criptomoneda no encontrada');
             }
 
-            const historyResponse = await axios.get(`https://api.coincap.io/v2/assets/${id}/history?interval=d1&start=${Date.now() - 6 * 30 * 24 * 60 * 60 * 1000}&end=${Date.now()}`);
+            // historial de precios (últimos 6 meses)
+            const endTime = Date.now();
+            const startTime = endTime - 6 * 30 * 24 * 60 * 60 * 1000;
+            const historyResponse = await axios.get(
+                `${this.apiBaseUrl}/assets/${id}/history`, {
+                    params: {
+                        interval: 'd1',
+                        start: startTime,
+                        end: endTime
+                    }
+                }
+            );
+            
             logger.info(`Detalles de la criptomoneda obtenidos para el usuario ${userId}: ${crypto.name}`);
             
             return {
@@ -242,7 +273,7 @@ export class ApiCryptoProvider extends CryptoProvider {
     }
 
     private async getCurrentPrice(cryptoId: string): Promise<number> {
-        const response = await axios.get(`https://api.coincap.io/v2/assets/${cryptoId}`);
+        const response = await axios.get(`${this.apiBaseUrl}/assets/${cryptoId}`);
         return parseFloat(response.data.data.priceUsd);
     }
 

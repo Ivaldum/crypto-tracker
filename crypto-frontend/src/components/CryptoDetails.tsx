@@ -3,15 +3,29 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { getToken } from '../utils/auth';
 import { Line } from 'react-chartjs-2';
-import { Chart, registerables } from 'chart.js';
+import { Chart, registerables, ChartOptions } from 'chart.js';
 import { XCircle } from 'lucide-react';
 
 Chart.register(...registerables);
 
+interface CryptoData {
+  id: string;
+  name: string;
+  symbol: string;
+  price: number;
+  trend: number;
+}
+
+interface PriceHistoryPoint {
+  time: number;
+  priceUsd: string;
+  date: string;
+}
+
 const CryptoDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
-    const [crypto, setCrypto] = useState<any>(null);
-    const [priceHistory, setPriceHistory] = useState<any[]>([]);
+    const [crypto, setCrypto] = useState<CryptoData | null>(null);
+    const [priceHistory, setPriceHistory] = useState<PriceHistoryPoint[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [onFetching, setOnFetching] = useState<boolean>(false);
 
@@ -62,11 +76,19 @@ const CryptoDetails: React.FC = () => {
         fetchCryptoDetails();
     }, [id]);
 
-    const formatDataForChart = () => {
-        if (!priceHistory) return { labels: [], datasets: [] };
+    const formatDate = (timestamp: number): string => {
+    const date = new Date(timestamp); 
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+};
 
-        const labels = priceHistory.map((point: any) => new Date(point.time * 1000).toLocaleDateString());
-        const data = priceHistory.map((point: any) => parseFloat(point.priceUsd));
+    const formatDataForChart = () => {
+        if (!priceHistory.length) return { labels: [], datasets: [] };
+
+        const labels = priceHistory.map((point: PriceHistoryPoint) => formatDate(point.time));
+        const data = priceHistory.map((point: PriceHistoryPoint) => parseFloat(point.priceUsd));
 
         return {
             labels,
@@ -88,20 +110,25 @@ const CryptoDetails: React.FC = () => {
         };
     };
 
-    const chartOptions = {
+    const chartOptions: ChartOptions<'line'> = {
         responsive: true,
         plugins: {
             legend: {
                 display: false,
             },
             tooltip: {
-                mode: 'index',
+                mode: 'index' as const,
                 intersect: false,
                 backgroundColor: 'rgba(255, 255, 255, 0.9)',
                 titleColor: '#1e293b',
                 bodyColor: '#1e293b',
                 borderColor: 'rgba(37, 99, 235, 0.2)',
                 borderWidth: 1,
+                callbacks: {
+                    title: (context) => {
+                        return context[0].label || '';
+                    }
+                }
             },
         },
         scales: {
@@ -119,13 +146,13 @@ const CryptoDetails: React.FC = () => {
                     color: 'rgba(0, 0, 0, 0.05)',
                 },
                 ticks: {
-                    callback: (value: any) => `$${value.toLocaleString()}`,
+                    callback: (value) => `${(value as number).toLocaleString()}`,
                 },
             },
         },
         interaction: {
             intersect: false,
-            mode: 'index',
+            mode: 'index' as const,
         },
     };
 

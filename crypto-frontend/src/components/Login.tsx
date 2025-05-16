@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { login as loginServer } from '../services/cryptoService';
-import { XCircle } from 'lucide-react';
+import { XCircle, CheckCircle } from 'lucide-react';
 
 const schema = yup.object().shape({
   email: yup.string().email('El correo debe ser válido').required('El correo es obligatorio'),
@@ -31,7 +31,7 @@ const Login: React.FC = () => {
     try {
       const token = await loginServer(data.email, data.password);
       login(token);
-      navigate(location.state?.from || '/panel');
+      navigate(state?.from || '/panel');
     } catch (error: any) {
       setErrorMessage(error.response?.data?.message || 'Error al iniciar sesión, intenta nuevamente');
     }
@@ -45,8 +45,18 @@ const Login: React.FC = () => {
         </h2>
 
         {(state?.message || errorMessage) && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-2 text-red-600">
-            <XCircle size={20} />
+          <div
+            className={`mb-6 border rounded-lg p-4 flex items-center gap-2 ${
+              state?.message
+                ? 'bg-green-50 border-green-200 text-green-700'
+                : 'bg-red-50 border-red-200 text-red-600'
+            }`}
+          >
+            {state?.message ? (
+              <CheckCircle size={20} className="text-green-700" />
+            ) : (
+              <XCircle size={20} className="text-red-600" />
+            )}
             <p>{state?.message || errorMessage}</p>
           </div>
         )}

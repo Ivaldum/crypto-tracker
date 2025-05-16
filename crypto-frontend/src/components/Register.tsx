@@ -27,9 +27,11 @@ const Register: React.FC = () => {
       await axios.post('http://localhost:3001/auth/register', formData);
       setMessage('Usuario registrado con éxito');
       setMessageType('success');
+      setTimeout(() => {
       navigate('/login', {
         state: { message: 'Registro exitoso. Por favor inicia sesión.' },
       });
+    }, 1000);
     } catch (error: any) {
       setMessageType('error');
       if (axios.isAxiosError(error)) {

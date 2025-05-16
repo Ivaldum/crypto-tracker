@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { XCircle } from 'lucide-react';
+import { XCircle, CheckCircle } from 'lucide-react';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -12,7 +12,10 @@ const Register: React.FC = () => {
     email: '',
     password: '',
   });
+
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'error'>('error');
+
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,8 +26,12 @@ const Register: React.FC = () => {
     try {
       await axios.post('http://localhost:3001/auth/register', formData);
       setMessage('Usuario registrado con éxito');
-      navigate('/login', { state: { message: 'Registro exitoso. Por favor inicia sesión.' } });
+      setMessageType('success');
+      navigate('/login', {
+        state: { message: 'Registro exitoso. Por favor inicia sesión.' },
+      });
     } catch (error: any) {
+      setMessageType('error');
       if (axios.isAxiosError(error)) {
         if (error.response) {
           switch (error.response.status) {
@@ -54,8 +61,18 @@ const Register: React.FC = () => {
         </h2>
 
         {message && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-2 text-red-600">
-            <XCircle size={20} />
+          <div
+            className={`mb-6 border rounded-lg p-4 flex items-center gap-2 ${
+              messageType === 'success'
+                ? 'bg-green-50 border-green-200 text-green-700'
+                : 'bg-red-50 border-red-200 text-red-600'
+            }`}
+          >
+            {messageType === 'success' ? (
+              <CheckCircle size={20} className="text-green-700" />
+            ) : (
+              <XCircle size={20} className="text-red-600" />
+            )}
             <p>{message}</p>
           </div>
         )}

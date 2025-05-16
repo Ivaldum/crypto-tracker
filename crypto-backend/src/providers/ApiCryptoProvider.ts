@@ -10,6 +10,7 @@ export class ApiCryptoProvider extends CryptoProvider {
     private emailService: EmailService;
     private apiKey: string;
     private apiBaseUrl: string;
+    
 
     constructor() {
         super();
